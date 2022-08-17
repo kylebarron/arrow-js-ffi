@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "moduleResolution": "node",
+    "outDir": "./lib",
+    "allowJs": true,
+    "target": "ES6",
+    "strictNullChecks": true,
+    "lib": [
+      "es2019.array", "es6", "dom"
+    ]
+  },
+  "include": ["./src/**/*"]
+}

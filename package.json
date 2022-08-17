@@ -1,0 +1,20 @@
+{
+  "name": "arrow-js-ffi",
+  "version": "0.1.0",
+  "description": "Zero-copy reading of Arrow data from WebAssembly",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "repository": "https://github.com/kylebarron/arrow-js-ffi",
+  "author": "Kyle Barron <kylebarron2@gmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc --declaration",
+    "watch": "tsc --watch --declaration"
+  },
+  "dependencies": {
+    "apache-arrow": "^9.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^4.7.4"
+  }
+}
