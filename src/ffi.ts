@@ -3,6 +3,11 @@
 import * as arrow from "apache-arrow";
 import { DataType, Type, Vector } from "apache-arrow";
 
+type ParsedBuffers = {
+  validity?: Uint8Array | null;
+  data?: any;
+};
+
 const formatMapping: Record<string, DataType | undefined> = {
   n: new arrow.Null(),
   b: new arrow.Bool(),
@@ -81,18 +86,46 @@ export function parseVector(
     bufferPtrs.push(dataView.getInt32(ptrToBuffers + i * 4, true));
   }
 
+  const buffers = parseBuffers(dataView, bufferPtrs, Number(length), dataType);
+
   const arrowData = arrow.makeData({
     type: dataType,
     offset: Number(offset),
     length: Number(length),
     nullCount: Number(nullCount),
+    nullBitmap: buffers.validity,
+    data: buffers.data,
   });
+
+  return arrow.makeVector(arrowData);
+}
+
+function parseBuffers(
+  dataView: DataView,
+  bufferPtrs: number[],
+  length: number,
+  dataType: DataType
+): ParsedBuffers {
+  const isPrimitive = true;
+  if (isPrimitive) {
+    const validityPtr = bufferPtrs[0];
+    // TODO: parse validity bitmaps
+    const validity = validityPtr === 0 ? null : null;
+
+    const dataPtr = bufferPtrs[1];
+    const data = new dataType.ArrayType(dataView.buffer, dataPtr, length);
+    return {
+      validity,
+      data,
+    };
+  }
+  throw new Error("Not implemented");
 }
 
 function parseNullTerminatedString(
-  dataView, //: DataView,
-  ptr, //: number,
-  maxBytesToRead = Infinity //: number = Infinity
+  dataView: DataView,
+  ptr: number,
+  maxBytesToRead: number = Infinity
 ) {
   const maxPtr = Math.min(ptr + maxBytesToRead, dataView.byteLength);
   let end = ptr;
