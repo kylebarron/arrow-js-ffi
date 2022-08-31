@@ -1,4 +1,4 @@
-// // @ts-nocheck
+// @ts-nocheck
 
 import * as arrow from "apache-arrow";
 import { DataType, Type, Vector } from "apache-arrow";
