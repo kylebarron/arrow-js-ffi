@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import * as arrow from "apache-arrow";
 
 const formatMapping: Record<string, arrow.DataType | undefined> = {
