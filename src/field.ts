@@ -1,14 +1,6 @@
-// // @ts-nocheck
-
 import * as arrow from "apache-arrow";
-import { DataType, Type, Vector } from "apache-arrow";
 
-type ParsedBuffers = {
-  validity?: Uint8Array | null;
-  data?: any;
-};
-
-const formatMapping: Record<string, DataType | undefined> = {
+const formatMapping: Record<string, arrow.DataType | undefined> = {
   n: new arrow.Null(),
   b: new arrow.Bool(),
   c: new arrow.Int8(),
@@ -62,64 +54,6 @@ function parseFormat(dataView: DataView, ptr: number): arrow.DataType {
   }
 
   throw new Error(`Unsupported format: ${format}`);
-}
-
-/**
- * Parse vector from FFI
- */
-export function parseVector(
-  buffer: ArrayBuffer,
-  ptr: number,
-  dataType: DataType
-): Vector {
-  const dataView = new DataView(buffer);
-
-  const length = dataView.getBigInt64(ptr, true);
-  const nullCount = dataView.getBigInt64(ptr + 8, true);
-  const offset = dataView.getBigInt64(ptr + 16, true);
-  const nBuffers = dataView.getBigInt64(ptr + 24, true);
-  const nChildren = dataView.getBigInt64(ptr + 32, true);
-
-  const ptrToBuffers = dataView.getInt32(ptr + 40, true);
-  const bufferPtrs: number[] = [];
-  for (let i = 0; i < nBuffers; i++) {
-    bufferPtrs.push(dataView.getInt32(ptrToBuffers + i * 4, true));
-  }
-
-  const buffers = parseBuffers(dataView, bufferPtrs, Number(length), dataType);
-
-  const arrowData = arrow.makeData({
-    type: dataType,
-    offset: Number(offset),
-    length: Number(length),
-    nullCount: Number(nullCount),
-    nullBitmap: buffers.validity,
-    data: buffers.data,
-  });
-
-  return arrow.makeVector(arrowData);
-}
-
-function parseBuffers(
-  dataView: DataView,
-  bufferPtrs: number[],
-  length: number,
-  dataType: DataType
-): ParsedBuffers {
-  const isPrimitive = true;
-  if (isPrimitive) {
-    const validityPtr = bufferPtrs[0];
-    // TODO: parse validity bitmaps
-    const validity = validityPtr === 0 ? null : null;
-
-    const dataPtr = bufferPtrs[1];
-    const data = new dataType.ArrayType(dataView.buffer, dataPtr, length);
-    return {
-      validity,
-      data,
-    };
-  }
-  throw new Error("Not implemented");
 }
 
 function parseNullTerminatedString(

@@ -1,1 +1,2 @@
-export {parseField, parseVector} from './ffi';
+export { parseVector } from "./vector";
+export { parseField } from "./field";
