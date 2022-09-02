@@ -28,4 +28,3 @@ export function arraysEqual<T>(
 
   return true;
 }
-

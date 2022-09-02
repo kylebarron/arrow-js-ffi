@@ -24,13 +24,10 @@ const PRIMITIVE_TYPES = [
   Type.Float,
   Type.Float16,
   Type.Float32,
-  Type.Float64
-]
+  Type.Float64,
+];
 
-const VARIABLE_BINARY_TYPES = [
-  Type.Binary,
-  Type.Utf8
-]
+const VARIABLE_BINARY_TYPES = [Type.Binary, Type.Utf8];
 
 /**
  * Parse vector from FFI
@@ -67,7 +64,6 @@ export function parseVector<T extends DataType>(
   return arrow.makeVector(arrowData);
 }
 
-
 /**
  * [parseBuffers description]
  *
@@ -77,7 +73,8 @@ function parseBuffers(
   dataView: DataView,
   bufferPtrs: number[],
   length: number,
-  dataType: DataType
+  dataType: DataType,
+  copy: boolean = false
 ): ParsedBuffers {
   if (PRIMITIVE_TYPES.includes(dataType.typeId)) {
     const validityPtr = bufferPtrs[0];
@@ -85,7 +82,9 @@ function parseBuffers(
     const nullBitmap = validityPtr === 0 ? null : null;
 
     const dataPtr = bufferPtrs[1];
-    const data = new dataType.ArrayType(dataView.buffer, dataPtr, length);
+    const data = copy
+      ? new dataType.ArrayType(copyBuffer(dataView.buffer, dataPtr, length))
+      : new dataType.ArrayType(dataView.buffer, dataPtr, length);
     return {
       nullBitmap,
       data,
@@ -101,16 +100,29 @@ function parseBuffers(
     const valueOffsets = new Int32Array([0, 1, 2, 3, 4])
     const data = new dataType.ArrayType(dataView.buffer, dataPtr, length);
 
-    console.log('data', data);
-    console.log('valueOffsets', valueOffsets);
-
     return {
       nullBitmap,
       valueOffsets,
-      data
-    }
+      data,
+    };
   }
 
   throw new Error("Not implemented");
 }
 
+/** Copy existing buffer into new buffer */
+function copyBuffer(
+  buffer: ArrayBuffer,
+  ptr: number,
+  length: number
+): ArrayBuffer {
+  const newBuffer = new ArrayBuffer(length);
+  const newBufferView = new Uint8Array(newBuffer);
+  const existingView = new Uint8Array(buffer, ptr, length);
+
+  for (let i = 0; i < length; i++) {
+    newBufferView[i] = existingView[i];
+  }
+
+  return newBuffer;
+}
