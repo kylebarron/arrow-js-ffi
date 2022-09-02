@@ -32,8 +32,8 @@ export function parseField(buffer: ArrayBuffer, ptr: number) {
   const dataView = new DataView(buffer);
 
   const format = parseFormat(dataView, ptr);
-  const namePtr = dataView.getInt32(ptr + 4, true);
-  const metadataPtr = dataView.getInt32(ptr + 8, true);
+  const namePtr = dataView.getUint32(ptr + 4, true);
+  const metadataPtr = dataView.getUint32(ptr + 8, true);
 
   const name = parseNullTerminatedString(dataView, namePtr);
   const metadata = parseNullTerminatedString(dataView, metadataPtr);
@@ -48,7 +48,7 @@ export function parseField(buffer: ArrayBuffer, ptr: number) {
 }
 
 function parseFormat(dataView: DataView, ptr: number): arrow.DataType {
-  const formatPtr = dataView.getInt32(ptr, true);
+  const formatPtr = dataView.getUint32(ptr, true);
   const format = parseNullTerminatedString(dataView, formatPtr);
 
   const staticType = formatMapping[format];
