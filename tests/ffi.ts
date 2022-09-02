@@ -7,7 +7,7 @@ import { parseField, parseVector } from "../src";
 wasm.setPanicHook();
 
 // @ts-expect-error
-const WASM_MEMORY = parquet.__wasm.memory;
+const WASM_MEMORY = wasm.__wasm.memory;
 
 test("read file", (t) => {
   const table = loadIPCTableFromDisk("tests/data.arrow");
