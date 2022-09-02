@@ -80,7 +80,6 @@ function parseBuffers(
   dataType: DataType
 ): ParsedBuffers {
   if (PRIMITIVE_TYPES.includes(dataType.typeId)) {
-    console.log(bufferPtrs);
     const validityPtr = bufferPtrs[0];
     // TODO: parse validity bitmaps
     const nullBitmap = validityPtr === 0 ? null : null;
