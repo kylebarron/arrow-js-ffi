@@ -1,6 +1,6 @@
 import { readFileSync } from "fs";
 import * as arrow from "apache-arrow";
-import * as parquet from "parquet-wasm/node/arrow2";
+import * as wasm from "rust-arrow-ffi";
 
 export function loadIPCTableFromDisk(path: string): arrow.Table {
   const buffer = readFileSync(path);
@@ -8,7 +8,6 @@ export function loadIPCTableFromDisk(path: string): arrow.Table {
 }
 
 /** Put an Arrow Table in Wasm memory and expose it via FFI */
-export function arrowTableToFFI(table: arrow.Table): parquet.FFIArrowTable {
-  const parquetBuffer = parquet.writeParquet(arrow.tableToIPC(table, "file"));
-  return parquet._readParquetFFI(parquetBuffer);
+export function arrowTableToFFI(table: arrow.Table): wasm.FFIArrowTable {
+  return wasm.arrowIPCToFFI(arrow.tableToIPC(table, "file"));
 }

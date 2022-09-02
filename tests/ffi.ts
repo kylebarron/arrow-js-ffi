@@ -1,11 +1,13 @@
 import * as test from "tape";
-import * as parquet from "parquet-wasm/node/arrow2";
 import * as arrow from "apache-arrow";
+import * as wasm from "rust-arrow-ffi";
 import { loadIPCTableFromDisk, arrowTableToFFI } from "./utils";
-import { parseField } from "../src";
+import { parseField, parseVector } from "../src";
+
+wasm.setPanicHook();
 
 // @ts-expect-error
-const WASM_MEMORY = parquet.__wasm.memory;
+const WASM_MEMORY = wasm.__wasm.memory;
 
 test("read file", (t) => {
   const table = loadIPCTableFromDisk("tests/data.arrow");
@@ -19,5 +21,6 @@ test("read file", (t) => {
   t.equals(field.typeId, new arrow.Utf8().typeId);
   t.equals(field.nullable, false);
 
+  const arrayPtr = ffiTable.arrayAddr(0, 0);
   t.end();
 });

@@ -670,11 +670,6 @@ pad-left@^2.1.0:
   dependencies:
     repeat-string "^1.5.4"
 
-parquet-wasm@0.4.0-beta.5:
-  version "0.4.0-beta.5"
-  resolved "https://registry.yarnpkg.com/parquet-wasm/-/parquet-wasm-0.4.0-beta.5.tgz#acbcd5ce48c33f6a24ec11acdbb619f4188a6728"
-  integrity sha512-o9WeZdt5It99o7/22VFs0p6bMZBdxXXZY3Oh6A3qHlhM2cIXs6wMIyrk08C6yVU4ljq5rscrWG2LLygY8LrhlQ==
-
 path-is-absolute@^1.0.0:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/path-is-absolute/-/path-is-absolute-1.0.1.tgz#174b9268735534ffbc7ace6bf53a5a9e1b5c5f5f"
@@ -719,6 +714,9 @@ resumer@^0.0.0:
   integrity sha512-Fn9X8rX8yYF4m81rZCK/5VmrmsSbqS/i3rDLl6ZZHAXgC2nTAx3dhwG8q8odP/RmdLa2YrybDJaAMg+X1ajY3w==
   dependencies:
     through "~2.3.4"
+
+rust-arrow-ffi@./tests/rust-arrow-ffi/pkg/:
+  version "0.1.0"
 
 side-channel@^1.0.3, side-channel@^1.0.4:
   version "1.0.4"
