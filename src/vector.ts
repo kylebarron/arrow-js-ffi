@@ -45,10 +45,10 @@ export function parseVector<T extends DataType>(
   const nBuffers = dataView.getBigInt64(ptr + 24, true);
   const nChildren = dataView.getBigInt64(ptr + 32, true);
 
-  const ptrToBuffers = dataView.getInt32(ptr + 40, true);
-  const bufferPtrs: number[] = [];
+  const ptrToBufferPtrs = dataView.getUint32(ptr + 40, true);
+  const bufferPtrs = new Uint32Array(Number(nBuffers));
   for (let i = 0; i < nBuffers; i++) {
-    bufferPtrs.push(dataView.getInt32(ptrToBuffers + i * 4, true));
+    bufferPtrs[i] = dataView.getUint32(ptrToBufferPtrs + i * 4, true);
   }
 
   const buffers = parseBuffers(dataView, bufferPtrs, Number(length), dataType);
@@ -71,7 +71,7 @@ export function parseVector<T extends DataType>(
  */
 function parseBuffers(
   dataView: DataView,
-  bufferPtrs: number[],
+  bufferPtrs: Uint32Array,
   length: number,
   dataType: DataType,
   copy: boolean = false
