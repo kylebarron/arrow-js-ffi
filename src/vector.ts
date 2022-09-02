@@ -96,8 +96,12 @@ function parseBuffers(
     // TODO: parse validity bitmaps
     const nullBitmap = validityPtr === 0 ? null : null;
 
-    // const valueOffsets = new Int32Array(dataView.buffer, offsetsPtr, length);
-    const valueOffsets = new Int32Array([0, 1, 2, 3, 4])
+    // Offsets array has length + 1
+    const valueOffsets = new Int32Array(
+      dataView.buffer,
+      offsetsPtr,
+      length + 1
+    );
     const data = new dataType.ArrayType(dataView.buffer, dataPtr, length);
 
     return {
