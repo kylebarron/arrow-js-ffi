@@ -62,6 +62,14 @@ const PRIMITIVE_TYPE_FIXTURES: FixtureType[] = [
     ]),
     dataType: new arrow.Int64(),
   },
+  {
+    data: Float32Array.from([3.14, -2.4, 43.245, 9023.135]),
+    dataType: new arrow.Float32(),
+  },
+  {
+    data: Float64Array.from([3.14, -2.4, 43.245, 9023.135]),
+    dataType: new arrow.Float64(),
+  },
 ];
 
 test("primitive types non-null", (t) => {
@@ -86,18 +94,64 @@ test("primitive types non-null", (t) => {
   t.end();
 });
 
+// test.skip("utf8 non-null", (t) => {
+//   const table = arrow.tableFromArrays({
+//     col1: ["a", "b", "c", "d"],
+//   });
+//   const ffiTable = arrowTableToFFI(table);
+//   console.log("test");
+//   const fieldPtr = ffiTable.schemaAddr(0);
+//   const field = parseField(WASM_MEMORY.buffer, fieldPtr);
 
+//   t.equals(field.name, "col1");
+//   t.equals(field.typeId, new arrow.Utf8().typeId);
+//   t.equals(field.nullable, false);
 
+//   const arrayPtr = ffiTable.arrayAddr(0, 0);
+//   const wasmVector = parseVector(WASM_MEMORY.buffer, arrayPtr, field.type);
+//   t.equals(wasmVector, table.getChildAt(0));
 
+//   console.log("table", table);
+//   console.log("table", table.schema.fields);
+//   console.log(table.toString());
 
+//   t.end();
 
-  const fieldPtr = ffiTable.schemaAddr(0);
-  const field = parseField(WASM_MEMORY.buffer, fieldPtr);
+//   // const builder = arrow.makeBuilder({
+//   //   type: new arrow.Utf8(),
+//   //   nullValues: null
+//   // });
+//   // builder.append("a");
+//   // builder.append("b");
+//   // builder.append("c");
+//   // builder.append("d");
 
-  t.equals(field.name, "str");
-  t.equals(field.typeId, new arrow.Utf8().typeId);
-  t.equals(field.nullable, false);
+//   // const vector = builder.finish().toVector();
+//   // const schema = new arrow.Schema([new arrow.Field("col1", new arrow.Utf8(), false)]);
 
-  const arrayPtr = ffiTable.arrayAddr(0, 0);
-  t.end();
-});
+//   // // new arrow.RecordBatch()
+//   // // arrow.makeData<arrow.Struct>()
+//   // // @ts-ignore
+//   // const recordBatchData = arrow.makeData<arrow.Struct>({ type: new arrow.Struct(), children: [vector.data] });
+//   // const recordBatch = new arrow.RecordBatch(
+//   //   schema,
+//   //   recordBatchData
+//   // );
+//   // const table = new arrow.Table(schema, recordBatch);
+//   // console.log('table', table.schema.fields)
+
+//   // const ffiTable = arrowTableToFFI(table);
+//   // const fieldPtr = ffiTable.schemaAddr(0);
+//   // const field = parseField(WASM_MEMORY.buffer, fieldPtr);
+
+//   // t.equals(field.name, "col1");
+//   // t.equals(field.typeId, new arrow.Utf8().typeId);
+//   // t.equals(field.nullable, false);
+
+//   // const arrayPtr = ffiTable.arrayAddr(0, 0);
+//   // const wasmVector = parseVector(WASM_MEMORY.buffer, arrayPtr, field.type);
+//   // console.log(wasmVector.toString())
+
+//   // t.end();
+//   // new arrow.RecordBatch(schema, )
+// });
