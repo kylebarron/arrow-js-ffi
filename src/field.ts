@@ -2,6 +2,7 @@
 
 import * as arrow from "apache-arrow";
 
+const UTF8_DECODER = new TextDecoder("utf-8");
 const formatMapping: Record<string, arrow.DataType | undefined> = {
   n: new arrow.Null(),
   b: new arrow.Bool(),
@@ -58,18 +59,17 @@ function parseFormat(dataView: DataView, ptr: number): arrow.DataType {
   throw new Error(`Unsupported format: ${format}`);
 }
 
+/** Parse a null-terminated C-style string */
 function parseNullTerminatedString(
   dataView: DataView,
   ptr: number,
   maxBytesToRead: number = Infinity
-) {
+): string {
   const maxPtr = Math.min(ptr + maxBytesToRead, dataView.byteLength);
   let end = ptr;
   while (end < maxPtr && dataView.getUint8(end) !== 0) {
     end += 1;
   }
 
-  return new TextDecoder("utf-8").decode(
-    new Uint8Array(dataView.buffer, ptr, end - ptr)
-  );
+  return UTF8_DECODER.decode(new Uint8Array(dataView.buffer, ptr, end - ptr));
 }
