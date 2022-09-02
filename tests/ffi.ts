@@ -14,7 +14,7 @@ interface FixtureType {
   dataType: arrow.DataType;
 }
 
-const PRIMITIVE_TYPE_FIXTURES: FixtureType[] = [
+const PRIMITIVE_NONNULL_FIXTURES: FixtureType[] = [
   // Bool
   {
     data: [true, false, true, false],
@@ -73,7 +73,7 @@ const PRIMITIVE_TYPE_FIXTURES: FixtureType[] = [
 ];
 
 test("primitive types non-null", (t) => {
-  for (const fixture of PRIMITIVE_TYPE_FIXTURES) {
+  for (const fixture of PRIMITIVE_NONNULL_FIXTURES) {
     const table = arrow.tableFromArrays({
       col1: fixture.data,
     });
