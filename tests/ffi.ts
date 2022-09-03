@@ -1,7 +1,7 @@
 import * as test from "tape";
 import * as arrow from "apache-arrow";
 import * as wasm from "rust-arrow-ffi";
-import { arrowTableToFFI, arraysEqual } from "./utils";
+import { arrowTableToFFI, arraysEqual, loadIPCTableFromDisk } from "./utils";
 import { parseField, parseVector } from "../src";
 
 wasm.setPanicHook();
@@ -91,6 +91,24 @@ test("primitive types non-null", (t) => {
     const wasmVector = parseVector(WASM_MEMORY.buffer, arrayPtr, field.type);
     t.ok(arraysEqual(originalVector?.toArray(), wasmVector.toArray()));
   }
+  t.end();
+});
+
+test("fixed size list", (t) => {
+  const table = loadIPCTableFromDisk("tests/fixed_size_list.arrow");
+  const originalField = table.schema.fields[0];
+  const originalVector = table.getChildAt(0);
+  const ffiTable = arrowTableToFFI(table);
+
+  const fieldPtr = ffiTable.schemaAddr(0);
+  const field = parseField(WASM_MEMORY.buffer, fieldPtr);
+
+  t.equals(field.name, originalField.name);
+  t.equals(field.typeId, originalField.typeId);
+  // t.equals(field.nullable, originalField.nullable);
+
+  console.log("field", field);
+
   t.end();
 });
 
