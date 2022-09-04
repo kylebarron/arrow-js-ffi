@@ -31,7 +31,8 @@ const formatMapping: Record<string, arrow.DataType | undefined> = {
 export function parseField(buffer: ArrayBuffer, ptr: number) {
   const dataView = new DataView(buffer);
 
-  const format = parseFormat(dataView, ptr);
+  const formatPtr = dataView.getUint32(ptr, true);
+  const formatString = parseNullTerminatedString(dataView, formatPtr);
   const namePtr = dataView.getUint32(ptr + 4, true);
   const metadataPtr = dataView.getUint32(ptr + 8, true);
 
@@ -42,21 +43,34 @@ export function parseField(buffer: ArrayBuffer, ptr: number) {
   const flags = dataView.getBigInt64(ptr + 16, true);
   const nChildren = dataView.getBigInt64(ptr + 24, true);
 
-  // TODO: parse children and
-
-  return arrow.Field.new(name, format, undefined);
-}
-
-function parseFormat(dataView: DataView, ptr: number): arrow.DataType {
-  const formatPtr = dataView.getUint32(ptr, true);
-  const format = parseNullTerminatedString(dataView, formatPtr);
-
-  const staticType = formatMapping[format];
-  if (staticType) {
-    return staticType;
+  const ptrToChildrenPtrs = dataView.getUint32(ptr + 32, true);
+  const childrenFields: arrow.Field[] = new Array(Number(nChildren));
+  for (let i = 0; i < nChildren; i++) {
+    childrenFields[i] = parseField(
+      buffer,
+      dataView.getUint32(ptrToChildrenPtrs + i * 4, true)
+    );
   }
 
-  throw new Error(`Unsupported format: ${format}`);
+  // console.log('childrenFields', childrenFields)
+
+  const primitiveType = formatMapping[formatString];
+  if (primitiveType) {
+    return new arrow.Field(name, primitiveType, undefined);
+  }
+
+  if (formatString[0] === "+") {
+    const fixedSizeListMatch = /\+w:(\d+)/.exec(formatString);
+    if (fixedSizeListMatch) {
+      const type = new arrow.FixedSizeList(
+        parseInt(fixedSizeListMatch[1]),
+        childrenFields[0]
+      );
+      return new arrow.Field(name, type, undefined);
+    }
+  }
+
+  throw new Error(`Unsupported format: ${formatString}`);
 }
 
 /** Parse a null-terminated C-style string */

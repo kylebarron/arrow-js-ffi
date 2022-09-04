@@ -1,49 +1,32 @@
-// // @ts-nocheck
-
 import * as arrow from "apache-arrow";
-import { DataType, Int, Type, Vector } from "apache-arrow";
-import { DataProps } from "apache-arrow/data";
+import { DataType } from "apache-arrow";
 
-type ParsedBuffers = {
-  nullBitmap?: Uint8Array | null;
-  data?: any;
-  valueOffsets?: any;
-};
+type NullBitmap = Uint8Array | null | undefined;
 
-const PRIMITIVE_TYPES = [
-  Type.Bool,
-  Type.Int,
-  Type.Int8,
-  Type.Int16,
-  Type.Int32,
-  Type.Int64,
-  Type.Uint8,
-  Type.Uint16,
-  Type.Uint32,
-  Type.Uint64,
-  Type.Float,
-  Type.Float16,
-  Type.Float32,
-  Type.Float64,
-];
-
-const VARIABLE_BINARY_TYPES = [Type.Binary, Type.Utf8];
-
-/**
- * Parse vector from FFI
- */
 export function parseVector<T extends DataType>(
   buffer: ArrayBuffer,
   ptr: number,
-  dataType: T
-): Vector<T> {
+  dataType: T,
+  copy: boolean = false
+): arrow.Vector<T> {
+  const data = parseData(buffer, ptr, dataType, copy);
+  return arrow.makeVector(data);
+}
+
+function parseData<T extends DataType>(
+  buffer: ArrayBuffer,
+  ptr: number,
+  dataType: T,
+  copy: boolean = false
+): arrow.Data<T> {
   const dataView = new DataView(buffer);
 
-  const length = dataView.getBigInt64(ptr, true);
-  const nullCount = dataView.getBigInt64(ptr + 8, true);
-  const offset = dataView.getBigInt64(ptr + 16, true);
-  const nBuffers = dataView.getBigInt64(ptr + 24, true);
-  const nChildren = dataView.getBigInt64(ptr + 32, true);
+  const length = Number(dataView.getBigInt64(ptr, true));
+  const nullCount = Number(dataView.getBigInt64(ptr + 8, true));
+  // TODO: if copying to a JS owned buffer, should this offset always be 0?
+  const offset = Number(dataView.getBigInt64(ptr + 16, true));
+  const nBuffers = Number(dataView.getBigInt64(ptr + 24, true));
+  const nChildren = Number(dataView.getBigInt64(ptr + 32, true));
 
   const ptrToBufferPtrs = dataView.getUint32(ptr + 40, true);
   const bufferPtrs = new Uint32Array(Number(nBuffers));
@@ -51,67 +34,271 @@ export function parseVector<T extends DataType>(
     bufferPtrs[i] = dataView.getUint32(ptrToBufferPtrs + i * 4, true);
   }
 
-  const buffers = parseBuffers(dataView, bufferPtrs, Number(length), dataType);
+  const ptrToChildrenPtrs = dataView.getUint32(ptr + 44, true);
+  const children = new Array(Number(nChildren));
+  for (let i = 0; i < nChildren; i++) {
+    children[i] = parseVector(
+      buffer,
+      dataView.getUint32(ptrToChildrenPtrs + i * 4, true),
+      dataType.children[i].type
+    );
+  }
 
-  const arrowData = arrow.makeData({
-    type: dataType,
-    offset: Number(offset),
-    length: Number(length),
-    nullCount: Number(nullCount),
-    ...buffers,
-  });
+  if (DataType.isNull(dataType)) {
+    return arrow.makeData({
+      type: dataType,
+      offset,
+      length,
+    });
+  }
 
-  return arrow.makeVector(arrowData);
-}
+  if (DataType.isInt(dataType)) {
+    const [validityPtr, dataPtr] = bufferPtrs;
+    const nullBitmap = parseNullBitmap(validityPtr);
+    console.log("dataPtr", dataPtr);
+    console.log("length", length);
 
-/**
- * [parseBuffers description]
- *
- * @return  {[type]}  [return description]
- */
-function parseBuffers(
-  dataView: DataView,
-  bufferPtrs: Uint32Array,
-  length: number,
-  dataType: DataType,
-  copy: boolean = false
-): ParsedBuffers {
-  if (PRIMITIVE_TYPES.includes(dataType.typeId)) {
-    const validityPtr = bufferPtrs[0];
-    // TODO: parse validity bitmaps
-    const nullBitmap = validityPtr === 0 ? null : null;
-
-    const dataPtr = bufferPtrs[1];
     const data = copy
       ? new dataType.ArrayType(copyBuffer(dataView.buffer, dataPtr, length))
       : new dataType.ArrayType(dataView.buffer, dataPtr, length);
-    return {
-      nullBitmap,
+    console.log("data", data);
+    return arrow.makeData({
+      type: dataType,
+      offset,
+      length,
+      nullCount,
       data,
-    };
+      nullBitmap,
+    });
   }
 
-  if (VARIABLE_BINARY_TYPES.includes(dataType.typeId)) {
-    const [validityPtr, offsetsPtr, dataPtr] = bufferPtrs;
-    // TODO: parse validity bitmaps
-    const nullBitmap = validityPtr === 0 ? null : null;
+  if (DataType.isFloat(dataType)) {
+    const [validityPtr, dataPtr] = bufferPtrs;
+    const nullBitmap = parseNullBitmap(validityPtr);
+    const data = copy
+      ? new dataType.ArrayType(copyBuffer(dataView.buffer, dataPtr, length))
+      : new dataType.ArrayType(dataView.buffer, dataPtr, length);
+    return arrow.makeData({
+      type: dataType,
+      offset,
+      length,
+      nullCount,
+      data,
+      nullBitmap,
+    });
+  }
 
-    // Offsets array has length + 1
+  if (DataType.isBool(dataType)) {
+    const [validityPtr, dataPtr] = bufferPtrs;
+    const nullBitmap = parseNullBitmap(validityPtr);
+    const data = copy
+      ? new dataType.ArrayType(copyBuffer(dataView.buffer, dataPtr, length))
+      : new dataType.ArrayType(dataView.buffer, dataPtr, length);
+    return arrow.makeData({
+      type: dataType,
+      offset,
+      length,
+      nullCount,
+      data,
+      nullBitmap,
+    });
+  }
+
+  if (DataType.isDecimal(dataType)) {
+    const [validityPtr, dataPtr] = bufferPtrs;
+    const nullBitmap = parseNullBitmap(validityPtr);
+    const data = copy
+      ? new dataType.ArrayType(copyBuffer(dataView.buffer, dataPtr, length))
+      : new dataType.ArrayType(dataView.buffer, dataPtr, length);
+    return arrow.makeData({
+      type: dataType,
+      offset,
+      length,
+      nullCount,
+      data,
+      nullBitmap,
+    });
+  }
+
+  if (DataType.isDate(dataType)) {
+    const [validityPtr, dataPtr] = bufferPtrs;
+    const nullBitmap = parseNullBitmap(validityPtr);
+    const data = copy
+      ? new dataType.ArrayType(copyBuffer(dataView.buffer, dataPtr, length))
+      : new dataType.ArrayType(dataView.buffer, dataPtr, length);
+    return arrow.makeData({
+      type: dataType,
+      offset,
+      length,
+      nullCount,
+      data,
+      nullBitmap,
+    });
+  }
+
+  if (DataType.isTime(dataType)) {
+    const [validityPtr, dataPtr] = bufferPtrs;
+    const nullBitmap = parseNullBitmap(validityPtr);
+    const data = copy
+      ? new dataType.ArrayType(copyBuffer(dataView.buffer, dataPtr, length))
+      : new dataType.ArrayType(dataView.buffer, dataPtr, length);
+    return arrow.makeData({
+      type: dataType,
+      offset,
+      length,
+      nullCount,
+      data,
+      nullBitmap,
+    });
+  }
+
+  if (DataType.isTimestamp(dataType)) {
+    const [validityPtr, dataPtr] = bufferPtrs;
+    const nullBitmap = parseNullBitmap(validityPtr);
+    const data = copy
+      ? new dataType.ArrayType(copyBuffer(dataView.buffer, dataPtr, length))
+      : new dataType.ArrayType(dataView.buffer, dataPtr, length);
+    return arrow.makeData({
+      type: dataType,
+      offset,
+      length,
+      nullCount,
+      data,
+      nullBitmap,
+    });
+  }
+
+  if (DataType.isInterval(dataType)) {
+    const [validityPtr, dataPtr] = bufferPtrs;
+    const nullBitmap = parseNullBitmap(validityPtr);
+    const data = copy
+      ? new dataType.ArrayType(copyBuffer(dataView.buffer, dataPtr, length))
+      : new dataType.ArrayType(dataView.buffer, dataPtr, length);
+    return arrow.makeData({
+      type: dataType,
+      offset,
+      length,
+      nullCount,
+      data,
+      nullBitmap,
+    });
+  }
+
+  if (DataType.isBinary(dataType)) {
+    const [validityPtr, offsetsPtr, dataPtr] = bufferPtrs;
+    const nullBitmap = parseNullBitmap(validityPtr);
     const valueOffsets = new Int32Array(
       dataView.buffer,
       offsetsPtr,
       length + 1
     );
-    const data = new dataType.ArrayType(dataView.buffer, dataPtr, length);
-
-    return {
+    const data = copy
+      ? new dataType.ArrayType(copyBuffer(dataView.buffer, dataPtr, length))
+      : new dataType.ArrayType(dataView.buffer, dataPtr, length);
+    return arrow.makeData({
+      type: dataType,
+      offset,
+      length,
+      nullCount,
       nullBitmap,
       valueOffsets,
       data,
-    };
+    });
   }
 
-  throw new Error("Not implemented");
+  if (DataType.isUtf8(dataType)) {
+    const [validityPtr, offsetsPtr, dataPtr] = bufferPtrs;
+    const nullBitmap = parseNullBitmap(validityPtr);
+    const valueOffsets = new Int32Array(
+      dataView.buffer,
+      offsetsPtr,
+      length + 1
+    );
+    const data = copy
+      ? new dataType.ArrayType(copyBuffer(dataView.buffer, dataPtr, length))
+      : new dataType.ArrayType(dataView.buffer, dataPtr, length);
+    return arrow.makeData({
+      type: dataType,
+      offset,
+      length,
+      nullCount,
+      nullBitmap,
+      valueOffsets,
+      data,
+    });
+  }
+
+  if (DataType.isFixedSizeBinary(dataType)) {
+    const [validityPtr, dataPtr] = bufferPtrs;
+    const nullBitmap = parseNullBitmap(validityPtr);
+    const data = copy
+      ? new dataType.ArrayType(copyBuffer(dataView.buffer, dataPtr, length))
+      : new dataType.ArrayType(dataView.buffer, dataPtr, length);
+    return arrow.makeData({
+      type: dataType,
+      offset,
+      length,
+      nullCount,
+      nullBitmap,
+      data,
+    });
+  }
+
+  if (DataType.isList(dataType)) {
+    assert(nChildren === 1);
+    const [validityPtr, offsetsPtr] = bufferPtrs;
+    const nullBitmap = parseNullBitmap(validityPtr);
+    const valueOffsets = new Int32Array(
+      dataView.buffer,
+      offsetsPtr,
+      length + 1
+    );
+    return arrow.makeData({
+      type: dataType,
+      offset,
+      length,
+      nullCount,
+      nullBitmap,
+      valueOffsets,
+      child: children[0],
+    });
+  }
+
+  if (DataType.isFixedSizeList(dataType)) {
+    assert(nChildren === 1);
+    const [validityPtr] = bufferPtrs;
+    const nullBitmap = parseNullBitmap(validityPtr);
+    return arrow.makeData({
+      type: dataType,
+      offset,
+      length,
+      nullCount,
+      nullBitmap,
+      child: children[0],
+    });
+  }
+
+  if (DataType.isStruct(dataType)) {
+    const [validityPtr] = bufferPtrs;
+    const nullBitmap = parseNullBitmap(validityPtr);
+    return arrow.makeData({
+      type: dataType,
+      offset,
+      length,
+      nullCount,
+      nullBitmap,
+      children,
+    });
+  }
+
+  // TODO: sparse union, dense union, dictionary
+  throw new Error(`Unsupported type ${dataType}`);
+}
+
+function parseNullBitmap(validityPtr: number): NullBitmap {
+  // TODO: parse validity bitmaps
+  const nullBitmap = validityPtr === 0 ? null : null;
+  return nullBitmap;
 }
 
 /** Copy existing buffer into new buffer */
@@ -129,4 +316,8 @@ function copyBuffer(
   }
 
   return newBuffer;
+}
+
+function assert(a: boolean): void {
+  if (!a) throw new Error(`assertion failed`);
 }
