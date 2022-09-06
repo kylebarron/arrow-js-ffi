@@ -334,11 +334,7 @@ function copyBuffer(
   const newBuffer = new ArrayBuffer(byteLength);
   const newBufferView = new Uint8Array(newBuffer);
   const existingView = new Uint8Array(buffer, ptr, byteLength);
-
-  for (let i = 0; i < byteLength; i++) {
-    newBufferView[i] = existingView[i];
-  }
-
+  newBufferView.set(existingView);
   return newBuffer;
 }
 
