@@ -121,7 +121,7 @@ test("primitive types non-null with copy", (t) => {
   t.end();
 });
 
-test.skip("fixed size list", (t) => {
+test("fixed size list", (t) => {
   const table = loadIPCTableFromDisk("tests/fixed_size_list.arrow");
   const originalField = table.schema.fields[0];
   const originalVector = table.getChildAt(0);
@@ -129,12 +129,21 @@ test.skip("fixed size list", (t) => {
 
   const fieldPtr = ffiTable.schemaAddr(0);
   const field = parseField(WASM_MEMORY.buffer, fieldPtr);
+  console.log("field", field);
 
   t.equals(field.name, originalField.name);
   t.equals(field.typeId, originalField.typeId);
   // t.equals(field.nullable, originalField.nullable);
 
-  console.log("field", field);
+  const arrayPtr = ffiTable.arrayAddr(0, 0);
+  const wasmVector = parseVector(WASM_MEMORY.buffer, arrayPtr, field.type);
+
+  t.equals(wasmVector.get(0).get(0), 1);
+  t.equals(wasmVector.get(0).get(1), 2);
+  t.equals(wasmVector.get(1).get(0), 3);
+  t.equals(wasmVector.get(1).get(1), 4);
+  t.equals(wasmVector.get(2).get(0), 5);
+  t.equals(wasmVector.get(2).get(1), 6);
 
   t.end();
 });
