@@ -13,7 +13,7 @@
     "test": "ts-node node_modules/tape/bin/tape ./tests/index.ts"
   },
   "dependencies": {
-    "apache-arrow": "^9.0.0"
+    "apache-arrow": "^12.0.0"
   },
   "devDependencies": {
     "@types/tape": "^4.13.2",
