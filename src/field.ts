@@ -41,9 +41,12 @@ const formatMapping: Record<string, arrow.DataType | undefined> = {
 };
 
 /**
- * Parse Field from Arrow C Data Interface
+Parse an [`ArrowSchema`](https://arrow.apache.org/docs/format/CDataInterface.html#the-arrowschema-structure) C FFI struct into an `arrow.Field` instance. The `Field` is necessary for later using `parseVector` below.
+
+- `buffer` (`ArrayBuffer`): The [`WebAssembly.Memory`](https://developer.mozilla.org/en-US/docs/WebAssembly/JavaScript_interface/Memory) instance to read from.
+- `ptr` (`number`): The numeric pointer in `buffer` where the C struct is located.
  */
-export function parseField(buffer: ArrayBuffer, ptr: number) {
+export function parseField(buffer: ArrayBuffer, ptr: number): arrow.Field {
   const dataView = new DataView(buffer);
 
   const formatPtr = dataView.getUint32(ptr, true);
@@ -147,7 +150,6 @@ export function parseField(buffer: ArrayBuffer, ptr: number) {
   throw new Error(`Unsupported format: ${formatString}`);
 }
 
-// https://stackoverflow.com/a/9954810
 function parseFlags(flag: bigint): Flags {
   if (flag === 0n) {
     return {
@@ -157,6 +159,7 @@ function parseFlags(flag: bigint): Flags {
     };
   }
 
+  // https://stackoverflow.com/a/9954810
   let parsed = flag.toString(2);
   return {
     nullable: parsed[0] === "1" ? true : false,
