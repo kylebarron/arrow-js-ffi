@@ -59,6 +59,12 @@ export function parseField(buffer: ArrayBuffer, ptr: number) {
     return new arrow.Field(name, primitiveType, undefined);
   }
 
+  // struct
+  if (formatString === "+s") {
+    const type = new arrow.Struct(childrenFields);
+    return new arrow.Field(name, type);
+  }
+
   if (formatString[0] === "+") {
     const fixedSizeListMatch = /\+w:(\d+)/.exec(formatString);
     if (fixedSizeListMatch) {
