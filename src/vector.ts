@@ -35,7 +35,7 @@ function parseData<T extends DataType>(
   }
 
   const ptrToChildrenPtrs = dataView.getUint32(ptr + 44, true);
-  const children = new Array(Number(nChildren));
+  const children: arrow.Vector[] = new Array(Number(nChildren));
   for (let i = 0; i < nChildren; i++) {
     children[i] = parseVector(
       buffer,
@@ -273,6 +273,10 @@ function parseData<T extends DataType>(
           copyBuffer(dataView.buffer, offsetsPtr, (length + 1) * 4)
         )
       : new Int32Array(dataView.buffer, offsetsPtr, length + 1);
+
+    assert(children[0].data.length === 1);
+    let childData = children[0].data[0];
+
     return arrow.makeData({
       type: dataType,
       offset,
@@ -280,7 +284,7 @@ function parseData<T extends DataType>(
       nullCount,
       nullBitmap,
       valueOffsets,
-      child: children[0],
+      child: childData,
     });
   }
 
@@ -288,26 +292,36 @@ function parseData<T extends DataType>(
     assert(nChildren === 1);
     const [validityPtr] = bufferPtrs;
     const nullBitmap = parseNullBitmap(dataView.buffer, validityPtr, copy);
+
+    assert(children[0].data.length === 1);
+    let childData = children[0].data[0];
+
     return arrow.makeData({
       type: dataType,
       offset,
       length,
       nullCount,
       nullBitmap,
-      child: children[0],
+      child: childData,
     });
   }
 
   if (DataType.isStruct(dataType)) {
     const [validityPtr] = bufferPtrs;
     const nullBitmap = parseNullBitmap(dataView.buffer, validityPtr, copy);
+
+    let childData = children.map(child => {
+        assert(child.data.length === 1);
+        return child.data[0];
+    })
+
     return arrow.makeData({
       type: dataType,
       offset,
       length,
       nullCount,
       nullBitmap,
-      children,
+      children: childData,
     });
   }
 
