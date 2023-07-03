@@ -1,6 +1,7 @@
 // @ts-nocheck
 
 import * as arrow from "apache-arrow";
+import { assert } from "./vector";
 
 const UTF8_DECODER = new TextDecoder("utf-8");
 const formatMapping: Record<string, arrow.DataType | undefined> = {
@@ -52,8 +53,6 @@ export function parseField(buffer: ArrayBuffer, ptr: number) {
     );
   }
 
-  // console.log('childrenFields', childrenFields)
-
   const primitiveType = formatMapping[formatString];
   if (primitiveType) {
     return new arrow.Field(name, primitiveType, undefined);
@@ -65,15 +64,28 @@ export function parseField(buffer: ArrayBuffer, ptr: number) {
     return new arrow.Field(name, type);
   }
 
-  if (formatString[0] === "+") {
-    const fixedSizeListMatch = /\+w:(\d+)/.exec(formatString);
-    if (fixedSizeListMatch) {
-      const type = new arrow.FixedSizeList(
-        parseInt(fixedSizeListMatch[1]),
-        childrenFields[0]
-      );
-      return new arrow.Field(name, type, undefined);
-    }
+  // list
+  if (formatString === "+l") {
+    assert(childrenFields.length === 1);
+    const type = new arrow.List(childrenFields[0]);
+    return new arrow.Field(name, type, undefined);
+  }
+
+  // FixedSizeBinary
+  if (formatString.slice(0, 2) === "w:") {
+    // The size of the binary is the integer after the colon
+    const byteWidth = parseInt(formatString.slice(2));
+    const type = new arrow.FixedSizeBinary(byteWidth);
+    return new arrow.Field(name, type, undefined);
+  }
+
+  // FixedSizeList
+  if (formatString.slice(0, 3) === "+w:") {
+    assert(childrenFields.length === 1);
+    // The size of the list is the integer after the colon
+    const innerSize = parseInt(formatString.slice(3));
+    const type = new arrow.FixedSizeList(innerSize, childrenFields[0]);
+    return new arrow.Field(name, type, undefined);
   }
 
   throw new Error(`Unsupported format: ${formatString}`);
