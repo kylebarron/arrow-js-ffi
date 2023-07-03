@@ -129,12 +129,11 @@ function parseData<T extends DataType>(
     const [validityPtr, dataPtr] = bufferPtrs;
     const nullBitmap = parseNullBitmap(dataView.buffer, validityPtr, copy);
 
-    // What's the bitwidth of date type?
-    if (copy) {
-      throw new Error("Not yet implemented");
-    }
+    let byteWidth = getDateByteWidth(dataType);
     const data = copy
-      ? new dataType.ArrayType(copyBuffer(dataView.buffer, dataPtr, length))
+      ? new dataType.ArrayType(
+          copyBuffer(dataView.buffer, dataPtr, length * byteWidth)
+        )
       : new dataType.ArrayType(dataView.buffer, dataPtr, length);
     return arrow.makeData({
       type: dataType,
@@ -167,13 +166,11 @@ function parseData<T extends DataType>(
     const [validityPtr, dataPtr] = bufferPtrs;
     const nullBitmap = parseNullBitmap(dataView.buffer, validityPtr, copy);
 
-    // What's the bitwidth here?
-    if (copy) {
-      throw new Error("Not yet implemented");
-    }
-
+    let byteWidth = getTimeByteWidth(dataType);
     const data = copy
-      ? new dataType.ArrayType(copyBuffer(dataView.buffer, dataPtr, length))
+      ? new dataType.ArrayType(
+          copyBuffer(dataView.buffer, dataPtr, length * byteWidth)
+        )
       : new dataType.ArrayType(dataView.buffer, dataPtr, length);
     return arrow.makeData({
       type: dataType,
@@ -361,6 +358,28 @@ function parseData<T extends DataType>(
   throw new Error(`Unsupported type ${dataType}`);
 }
 
+function getDateByteWidth(type: arrow.Date_): number {
+  switch (type.unit) {
+    case arrow.DateUnit.DAY:
+      return 4;
+    case arrow.DateUnit.MILLISECOND:
+      return 8;
+  }
+  assertUnreachable();
+}
+
+function getTimeByteWidth(type: arrow.Time | arrow.Timestamp): number {
+  switch (type.unit) {
+    case arrow.TimeUnit.SECOND:
+    case arrow.TimeUnit.MILLISECOND:
+      return 4;
+    case arrow.TimeUnit.MICROSECOND:
+    case arrow.TimeUnit.NANOSECOND:
+      return 8;
+  }
+  assertUnreachable();
+}
+
 function parseNullBitmap(
   buffer: ArrayBuffer,
   validityPtr: number,
@@ -386,4 +405,8 @@ function copyBuffer(
 
 export function assert(a: boolean): void {
   if (!a) throw new Error(`assertion failed`);
+}
+
+function assertUnreachable(): never {
+  throw new Error();
 }

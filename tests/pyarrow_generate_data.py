@@ -1,3 +1,6 @@
+from datetime import date, datetime
+from decimal import Decimal
+
 import numpy as np
 import pyarrow as pa
 import pyarrow.feather as feather
@@ -53,6 +56,42 @@ def list_array() -> pa.Array:
     return arr
 
 
+def decimal128_array() -> pa.Array:
+    arr = pa.Decimal128Array.from_pandas(
+        [Decimal("1.23"), Decimal("2.67"), Decimal("4.93")], type=pa.decimal128(10, 3)
+    )
+    assert isinstance(arr, pa.Decimal128Array)
+    return arr
+
+
+def date32_array() -> pa.Array:
+    arr = pa.Date32Array.from_pandas(
+        [date(2021, 1, 3), date(2021, 5, 6), date(2021, 8, 9)]
+    )
+    assert isinstance(arr, pa.Date32Array)
+    return arr
+
+
+def date64_array() -> pa.Array:
+    arr = pa.Date64Array.from_pandas(
+        [date(2021, 1, 3), date(2021, 5, 6), date(2021, 8, 9)], type=pa.date64()
+    )
+    assert isinstance(arr, pa.Date64Array)
+    return arr
+
+
+def timestamp_array() -> pa.Array:
+    arr = pa.TimestampArray.from_pandas(
+        [datetime.now(), datetime.now(), datetime.now()],
+        type=pa.timestamp("s", tz="America/New_York"),
+    )
+
+    assert isinstance(arr, pa.TimestampArray)
+    assert arr.type.unit == "s"
+    assert arr.type.tz == "America/New_York"
+    return arr
+
+
 class MyExtensionType(pa.ExtensionType):
     """
     Refer to https://arrow.apache.org/docs/python/extending_types.html for
@@ -94,6 +133,10 @@ def table() -> pa.Table:
             "null": null_array(),
             "list": list_array(),
             "extension": extension_array(),
+            "decimal128": decimal128_array(),
+            "date32": date32_array(),
+            "date64": date64_array(),
+            "timestamp": timestamp_array(),
         }
     )
 
