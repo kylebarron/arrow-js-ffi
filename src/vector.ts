@@ -90,7 +90,11 @@ function parseData<T extends DataType>(
   if (DataType.isBool(dataType)) {
     const [validityPtr, dataPtr] = bufferPtrs;
     const nullBitmap = parseNullBitmap(dataView.buffer, validityPtr, copy);
-    const byteLength = length * 1;
+
+    // Boolean arrays are bit-packed. This means the byte length should be the number of elements,
+    // rounded up to the nearest byte to account for the remainder.
+    const byteLength = Math.ceil(length / 8);
+
     const data = copy
       ? new dataType.ArrayType(copyBuffer(dataView.buffer, dataPtr, byteLength))
       : new dataType.ArrayType(dataView.buffer, dataPtr, length);
@@ -208,12 +212,21 @@ function parseData<T extends DataType>(
 
     const valueOffsets = copy
       ? new Int32Array(
-          copyBuffer(dataView.buffer, offsetsPtr, (length + 1) * 4)
+          copyBuffer(
+            dataView.buffer,
+            offsetsPtr,
+            (length + 1) * Int32Array.BYTES_PER_ELEMENT
+          )
         )
       : new Int32Array(dataView.buffer, offsetsPtr, length + 1);
+
+    // The length described in pointer is the number of elements. The last element in `valueOffsets`
+    // stores the maximum offset in the buffer and thus the byte length
+    const byteLength = valueOffsets[valueOffsets.length - 1];
+
     const data = copy
-      ? new dataType.ArrayType(copyBuffer(dataView.buffer, dataPtr, length))
-      : new dataType.ArrayType(dataView.buffer, dataPtr, length);
+      ? new dataType.ArrayType(copyBuffer(dataView.buffer, dataPtr, byteLength))
+      : new dataType.ArrayType(dataView.buffer, dataPtr, byteLength);
     return arrow.makeData({
       type: dataType,
       offset,
@@ -231,12 +244,21 @@ function parseData<T extends DataType>(
 
     const valueOffsets = copy
       ? new Int32Array(
-          copyBuffer(dataView.buffer, offsetsPtr, (length + 1) * 4)
+          copyBuffer(
+            dataView.buffer,
+            offsetsPtr,
+            (length + 1) * Int32Array.BYTES_PER_ELEMENT
+          )
         )
       : new Int32Array(dataView.buffer, offsetsPtr, length + 1);
+
+    // The length described in pointer is the number of elements. The last element in `valueOffsets`
+    // stores the maximum offset in the buffer and thus the byte length
+    const byteLength = valueOffsets[valueOffsets.length - 1];
+
     const data = copy
-      ? new dataType.ArrayType(copyBuffer(dataView.buffer, dataPtr, length))
-      : new dataType.ArrayType(dataView.buffer, dataPtr, length);
+      ? new dataType.ArrayType(copyBuffer(dataView.buffer, dataPtr, byteLength))
+      : new dataType.ArrayType(dataView.buffer, dataPtr, byteLength);
     return arrow.makeData({
       type: dataType,
       offset,
@@ -252,8 +274,14 @@ function parseData<T extends DataType>(
     const [validityPtr, dataPtr] = bufferPtrs;
     const nullBitmap = parseNullBitmap(dataView.buffer, validityPtr, copy);
     const data = copy
-      ? new dataType.ArrayType(copyBuffer(dataView.buffer, dataPtr, length))
-      : new dataType.ArrayType(dataView.buffer, dataPtr, length);
+      ? new dataType.ArrayType(
+          copyBuffer(dataView.buffer, dataPtr, length * dataType.byteWidth)
+        )
+      : new dataType.ArrayType(
+          dataView.buffer,
+          dataPtr,
+          length * dataType.byteWidth
+        );
     return arrow.makeData({
       type: dataType,
       offset,
@@ -270,7 +298,11 @@ function parseData<T extends DataType>(
     const nullBitmap = parseNullBitmap(dataView.buffer, validityPtr, copy);
     const valueOffsets = copy
       ? new Int32Array(
-          copyBuffer(dataView.buffer, offsetsPtr, (length + 1) * 4)
+          copyBuffer(
+            dataView.buffer,
+            offsetsPtr,
+            (length + 1) * Int32Array.BYTES_PER_ELEMENT
+          )
         )
       : new Int32Array(dataView.buffer, offsetsPtr, length + 1);
 
@@ -310,10 +342,10 @@ function parseData<T extends DataType>(
     const [validityPtr] = bufferPtrs;
     const nullBitmap = parseNullBitmap(dataView.buffer, validityPtr, copy);
 
-    let childData = children.map(child => {
-        assert(child.data.length === 1);
-        return child.data[0];
-    })
+    let childData = children.map((child) => {
+      assert(child.data.length === 1);
+      return child.data[0];
+    });
 
     return arrow.makeData({
       type: dataType,
@@ -352,6 +384,6 @@ function copyBuffer(
   return newBuffer;
 }
 
-function assert(a: boolean): void {
+export function assert(a: boolean): void {
   if (!a) throw new Error(`assertion failed`);
 }

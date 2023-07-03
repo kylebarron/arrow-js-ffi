@@ -184,6 +184,151 @@ test("struct", (t) => {
   t.end();
 });
 
+test("binary", (t) => {
+  let columnIndex = TEST_TABLE.schema.fields.findIndex(
+    (field) => field.name == "binary"
+  );
+
+  const originalField = TEST_TABLE.schema.fields[columnIndex];
+  // declare it's not null
+  const originalVector = TEST_TABLE.getChildAt(columnIndex) as arrow.Vector;
+  const fieldPtr = FFI_TABLE.schemaAddr(columnIndex);
+  const field = parseField(WASM_MEMORY.buffer, fieldPtr);
+
+  t.equals(field.name, originalField.name, "Field name should be equal.");
+  t.equals(field.typeId, originalField.typeId, "Type id should be equal.");
+
+  const arrayPtr = FFI_TABLE.arrayAddr(0, columnIndex);
+  const wasmVector = parseVector(WASM_MEMORY.buffer, arrayPtr, field.type);
+
+  t.ok(
+    arraysEqual(
+      originalVector?.data[0]?.valueOffsets,
+      wasmVector?.data[0]?.valueOffsets
+    ),
+    "valueOffsets are equal"
+  );
+  t.ok(
+    arraysEqual(originalVector?.data[0]?.values, wasmVector?.data[0]?.values),
+    "values are equal"
+  );
+
+  t.end();
+});
+
+test("string", (t) => {
+  let columnIndex = TEST_TABLE.schema.fields.findIndex(
+    (field) => field.name == "string"
+  );
+
+  const originalField = TEST_TABLE.schema.fields[columnIndex];
+  // declare it's not null
+  const originalVector = TEST_TABLE.getChildAt(columnIndex) as arrow.Vector;
+  const fieldPtr = FFI_TABLE.schemaAddr(columnIndex);
+  const field = parseField(WASM_MEMORY.buffer, fieldPtr);
+
+  t.equals(field.name, originalField.name, "Field name should be equal.");
+  t.equals(field.typeId, originalField.typeId, "Type id should be equal.");
+
+  const arrayPtr = FFI_TABLE.arrayAddr(0, columnIndex);
+  const wasmVector = parseVector(WASM_MEMORY.buffer, arrayPtr, field.type);
+
+  t.ok(
+    arraysEqual(originalVector.toArray(), wasmVector.toArray()),
+    "string data are equal"
+  );
+
+  t.end();
+});
+
+test("boolean", (t) => {
+  let columnIndex = TEST_TABLE.schema.fields.findIndex(
+    (field) => field.name == "boolean"
+  );
+
+  const originalField = TEST_TABLE.schema.fields[columnIndex];
+  // declare it's not null
+  const originalVector = TEST_TABLE.getChildAt(columnIndex) as arrow.Vector;
+  const fieldPtr = FFI_TABLE.schemaAddr(columnIndex);
+  const field = parseField(WASM_MEMORY.buffer, fieldPtr);
+
+  t.equals(field.name, originalField.name, "Field name should be equal.");
+  t.equals(field.typeId, originalField.typeId, "Type id should be equal.");
+
+  const arrayPtr = FFI_TABLE.arrayAddr(0, columnIndex);
+  const wasmVector = parseVector(WASM_MEMORY.buffer, arrayPtr, field.type);
+
+  t.ok(
+    arraysEqual(originalVector.toArray(), wasmVector.toArray()),
+    "boolean data are equal"
+  );
+
+  t.end();
+});
+
+test("null array", (t) => {
+  let columnIndex = TEST_TABLE.schema.fields.findIndex(
+    (field) => field.name == "null"
+  );
+
+  const originalField = TEST_TABLE.schema.fields[columnIndex];
+  // declare it's not null
+  const originalVector = TEST_TABLE.getChildAt(columnIndex) as arrow.Vector;
+  const fieldPtr = FFI_TABLE.schemaAddr(columnIndex);
+  const field = parseField(WASM_MEMORY.buffer, fieldPtr);
+
+  t.equals(field.name, originalField.name, "Field name should be equal.");
+  t.equals(field.typeId, originalField.typeId, "Type id should be equal.");
+
+  const arrayPtr = FFI_TABLE.arrayAddr(0, columnIndex);
+  const wasmVector = parseVector(WASM_MEMORY.buffer, arrayPtr, field.type);
+
+  t.ok(
+    arraysEqual(originalVector.toArray(), wasmVector.toArray()),
+    "null arrays are equal"
+  );
+
+  t.end();
+});
+
+test("list array", (t) => {
+  let columnIndex = TEST_TABLE.schema.fields.findIndex(
+    (field) => field.name == "list"
+  );
+
+  const originalField = TEST_TABLE.schema.fields[columnIndex];
+  // declare it's not null
+  const originalVector = TEST_TABLE.getChildAt(columnIndex) as arrow.Vector;
+  const fieldPtr = FFI_TABLE.schemaAddr(columnIndex);
+  const field = parseField(WASM_MEMORY.buffer, fieldPtr);
+
+  t.equals(field.name, originalField.name, "Field name should be equal.");
+  t.equals(field.typeId, originalField.typeId, "Type id should be equal.");
+
+  const arrayPtr = FFI_TABLE.arrayAddr(0, columnIndex);
+  const wasmVector = parseVector(WASM_MEMORY.buffer, arrayPtr, field.type);
+
+  t.ok(
+    arraysEqual(
+      originalVector.getChildAt(0)?.toArray(),
+      wasmVector.getChildAt(0)?.toArray()
+    ),
+    "underlying values are equal"
+  );
+  t.ok(
+    arraysEqual(
+      originalVector.data[0].valueOffsets,
+      wasmVector.data[0].valueOffsets
+    ),
+    "values offsets are equal"
+  );
+
+  t.end();
+});
+
+  // console.log(originalVector.getChildAt(0)?.toArray());
+  // console.log(wasmVector.toJSON());
+
 // test.skip("utf8 non-null", (t) => {
 //   const table = arrow.tableFromArrays({
 //     col1: ["a", "b", "c", "d"],
