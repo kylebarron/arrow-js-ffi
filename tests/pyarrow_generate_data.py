@@ -68,7 +68,7 @@ class MyExtensionType(pa.ExtensionType):
         return b"extension_metadata"
 
     @classmethod
-    def __arrow_ext_deserialize__(self, storage_type, serialized):
+    def __arrow_ext_deserialize__(cls, storage_type, serialized):
         # return an instance of this subclass given the serialized
         # metadata.
         return MyExtensionType()
