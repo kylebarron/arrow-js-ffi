@@ -53,6 +53,36 @@ def list_array() -> pa.Array:
     return arr
 
 
+class MyExtensionType(pa.ExtensionType):
+    """
+    Refer to https://arrow.apache.org/docs/python/extending_types.html for
+    implementation details
+    """
+
+    def __init__(self):
+        pa.ExtensionType.__init__(self, pa.uint8(), "extension_name")
+
+    def __arrow_ext_serialize__(self):
+        # since we don't have a parameterized type, we don't need extra
+        # metadata to be deserialized
+        return b"extension_metadata"
+
+    @classmethod
+    def __arrow_ext_deserialize__(cls, storage_type, serialized):
+        # return an instance of this subclass given the serialized
+        # metadata.
+        return MyExtensionType()
+
+
+pa.register_extension_type(MyExtensionType())
+
+
+def extension_array() -> pa.Array:
+    arr = pa.array([1, 2, 3], type=MyExtensionType())
+    assert isinstance(arr, pa.ExtensionArray)
+    return arr
+
+
 def table() -> pa.Table:
     return pa.table(
         {
@@ -63,6 +93,7 @@ def table() -> pa.Table:
             "boolean": boolean_array(),
             "null": null_array(),
             "list": list_array(),
+            "extension": extension_array(),
         }
     )
 

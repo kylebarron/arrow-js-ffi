@@ -326,8 +326,47 @@ test("list array", (t) => {
   t.end();
 });
 
-  // console.log(originalVector.getChildAt(0)?.toArray());
-  // console.log(wasmVector.toJSON());
+test.only("extension array", (t) => {
+  let columnIndex = TEST_TABLE.schema.fields.findIndex(
+    (field) => field.name == "extension"
+  );
+
+  const originalField = TEST_TABLE.schema.fields[columnIndex];
+  // declare it's not null
+  const originalVector = TEST_TABLE.getChildAt(columnIndex) as arrow.Vector;
+  const fieldPtr = FFI_TABLE.schemaAddr(columnIndex);
+  const field = parseField(WASM_MEMORY.buffer, fieldPtr);
+
+  t.equals(field.name, originalField.name, "Field name should be equal.");
+  t.equals(field.typeId, originalField.typeId, "Type id should be equal.");
+  t.equals(
+    field.metadata.size,
+    originalField.metadata.size,
+    "Number of elements in the metadata map should be equal."
+  );
+  t.equals(
+    field.metadata.get("ARROW:extension:name"),
+    originalField.metadata.get("ARROW:extension:name"),
+    "Extension name should be equal."
+  );
+  t.equals(
+    field.metadata.get("ARROW:extension:metadata"),
+    originalField.metadata.get("ARROW:extension:metadata"),
+    "Extension metadata should be equal."
+  );
+
+  const arrayPtr = FFI_TABLE.arrayAddr(0, columnIndex);
+  const wasmVector = parseVector(WASM_MEMORY.buffer, arrayPtr, field.type);
+
+  t.ok(
+    arraysEqual(originalVector.toArray(), wasmVector.toArray()),
+    "array values are equal"
+  );
+  t.end();
+});
+
+// console.log(originalVector.getChildAt(0)?.toArray());
+// console.log(wasmVector.toJSON());
 
 // test.skip("utf8 non-null", (t) => {
 //   const table = arrow.tableFromArrays({

@@ -38,7 +38,7 @@ export function parseField(buffer: ArrayBuffer, ptr: number) {
   const metadataPtr = dataView.getUint32(ptr + 8, true);
 
   const name = parseNullTerminatedString(dataView, namePtr);
-  const metadata = parseNullTerminatedString(dataView, metadataPtr);
+  const metadata = parseMetadata(dataView, metadataPtr);
 
   // Extra 4 to be 8-byte aligned
   const flags = dataView.getBigInt64(ptr + 16, true);
@@ -55,20 +55,20 @@ export function parseField(buffer: ArrayBuffer, ptr: number) {
 
   const primitiveType = formatMapping[formatString];
   if (primitiveType) {
-    return new arrow.Field(name, primitiveType, undefined);
+    return new arrow.Field(name, primitiveType, undefined, metadata);
   }
 
   // struct
   if (formatString === "+s") {
     const type = new arrow.Struct(childrenFields);
-    return new arrow.Field(name, type);
+    return new arrow.Field(name, type, undefined, metadata);
   }
 
   // list
   if (formatString === "+l") {
     assert(childrenFields.length === 1);
     const type = new arrow.List(childrenFields[0]);
-    return new arrow.Field(name, type, undefined);
+    return new arrow.Field(name, type, undefined, metadata);
   }
 
   // FixedSizeBinary
@@ -76,7 +76,7 @@ export function parseField(buffer: ArrayBuffer, ptr: number) {
     // The size of the binary is the integer after the colon
     const byteWidth = parseInt(formatString.slice(2));
     const type = new arrow.FixedSizeBinary(byteWidth);
-    return new arrow.Field(name, type, undefined);
+    return new arrow.Field(name, type, undefined, metadata);
   }
 
   // FixedSizeList
@@ -85,7 +85,7 @@ export function parseField(buffer: ArrayBuffer, ptr: number) {
     // The size of the list is the integer after the colon
     const innerSize = parseInt(formatString.slice(3));
     const type = new arrow.FixedSizeList(innerSize, childrenFields[0]);
-    return new arrow.Field(name, type, undefined);
+    return new arrow.Field(name, type, undefined, metadata);
   }
 
   throw new Error(`Unsupported format: ${formatString}`);
@@ -104,4 +104,43 @@ function parseNullTerminatedString(
   }
 
   return UTF8_DECODER.decode(new Uint8Array(dataView.buffer, ptr, end - ptr));
+}
+
+/**
+ * Parse field metadata
+ *
+ * The metadata format is described here:
+ * https://arrow.apache.org/docs/format/CDataInterface.html#c.ArrowSchema.metadata
+ */
+function parseMetadata(
+  dataView: DataView,
+  ptr: number
+): Map<string, string> | null {
+  const numEntries = dataView.getInt32(ptr, true);
+  if (numEntries === 0) {
+    return null;
+  }
+
+  const metadata: Map<string, string> = new Map();
+
+  ptr += 4;
+  for (let i = 0; i < numEntries; i++) {
+    const keyByteLength = dataView.getInt32(ptr, true);
+    ptr += 4;
+    const key = UTF8_DECODER.decode(
+      new Uint8Array(dataView.buffer, ptr, keyByteLength)
+    );
+    ptr += keyByteLength;
+
+    const valueByteLength = dataView.getInt32(ptr, true);
+    ptr += 4;
+    const value = UTF8_DECODER.decode(
+      new Uint8Array(dataView.buffer, ptr, valueByteLength)
+    );
+    ptr += valueByteLength;
+
+    metadata.set(key, value);
+  }
+
+  return metadata;
 }
