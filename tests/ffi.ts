@@ -9,6 +9,9 @@ wasm.setPanicHook();
 // @ts-expect-error
 const WASM_MEMORY: WebAssembly.Memory = wasm.__wasm.memory;
 
+const TEST_TABLE = loadIPCTableFromDisk("tests/table.arrow");
+const FFI_TABLE = arrowTableToFFI(TEST_TABLE);
+
 interface FixtureType {
   data: any;
   dataType: arrow.DataType;
@@ -122,18 +125,19 @@ test("primitive types non-null with copy", (t) => {
 });
 
 test("fixed size list", (t) => {
-  const table = loadIPCTableFromDisk("tests/fixed_size_list.arrow");
-  const originalField = table.schema.fields[0];
-  const originalVector = table.getChildAt(0);
-  const ffiTable = arrowTableToFFI(table);
+  let columnIndex = TEST_TABLE.schema.fields.findIndex(
+    (field) => field.name == "fixedsizelist"
+  );
 
-  const fieldPtr = ffiTable.schemaAddr(0);
+  const originalField = TEST_TABLE.schema.fields[columnIndex];
+
+  const fieldPtr = FFI_TABLE.schemaAddr(columnIndex);
   const field = parseField(WASM_MEMORY.buffer, fieldPtr);
 
   t.equals(field.name, originalField.name, "Field name should be equal.");
   t.equals(field.typeId, originalField.typeId, "Type id should be equal.");
 
-  const arrayPtr = ffiTable.arrayAddr(0, 0);
+  const arrayPtr = FFI_TABLE.arrayAddr(0, columnIndex);
   const wasmVector = parseVector(WASM_MEMORY.buffer, arrayPtr, field.type);
 
   t.equals(wasmVector.get(0).get(0), 1);
@@ -142,6 +146,40 @@ test("fixed size list", (t) => {
   t.equals(wasmVector.get(1).get(1), 4);
   t.equals(wasmVector.get(2).get(0), 5);
   t.equals(wasmVector.get(2).get(1), 6);
+
+  t.end();
+});
+
+test("struct", (t) => {
+  let columnIndex = TEST_TABLE.schema.fields.findIndex(
+    (field) => field.name == "struct"
+  );
+
+  const originalField = TEST_TABLE.schema.fields[columnIndex];
+  const originalVector = TEST_TABLE.getChildAt(columnIndex);
+  const fieldPtr = FFI_TABLE.schemaAddr(columnIndex);
+  const field = parseField(WASM_MEMORY.buffer, fieldPtr);
+
+  t.equals(field.name, originalField.name, "Field name should be equal.");
+  t.equals(field.typeId, originalField.typeId, "Type id should be equal.");
+
+  const arrayPtr = FFI_TABLE.arrayAddr(0, columnIndex);
+  const wasmVector = parseVector(WASM_MEMORY.buffer, arrayPtr, field.type);
+
+  t.ok(
+    arraysEqual(
+      originalVector?.getChildAt(0)?.toArray(),
+      wasmVector?.getChildAt(0)?.toArray()
+    ),
+    "x child is equal"
+  );
+  t.ok(
+    arraysEqual(
+      originalVector?.getChildAt(1)?.toArray(),
+      wasmVector?.getChildAt(1)?.toArray()
+    ),
+    "y child is equal"
+  );
 
   t.end();
 });
