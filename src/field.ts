@@ -4,6 +4,7 @@ import * as arrow from "apache-arrow";
 import { assert } from "./vector";
 
 const UTF8_DECODER = new TextDecoder("utf-8");
+// Note: it looks like duration types don't yet exist in Arrow JS
 const formatMapping: Record<string, arrow.DataType | undefined> = {
   n: new arrow.Null(),
   b: new arrow.Bool(),
@@ -22,8 +23,15 @@ const formatMapping: Record<string, arrow.DataType | undefined> = {
   // Z: Type.LargeBinary,
   u: new arrow.Utf8(),
   // U: Type.LargeUtf8,
-
-  // TODO: support time, nested types, etc
+  tdD: new arrow.DateDay(),
+  tdm: new arrow.DateMillisecond(),
+  tts: new arrow.TimeSecond(),
+  ttm: new arrow.TimeMillisecond(),
+  ttu: new arrow.TimeMicrosecond(),
+  ttn: new arrow.TimeNanosecond(),
+  tiM: new arrow.Interval(arrow.IntervalUnit.YEAR_MONTH),
+  tiD: new arrow.Interval(arrow.IntervalUnit.DAY_TIME),
+  tin: new arrow.Interval(arrow.IntervalUnit.MONTH_DAY_NANO),
 };
 
 /**
@@ -56,6 +64,48 @@ export function parseField(buffer: ArrayBuffer, ptr: number) {
   const primitiveType = formatMapping[formatString];
   if (primitiveType) {
     return new arrow.Field(name, primitiveType, undefined, metadata);
+  }
+
+  // decimal
+  if (formatString.slice(0, 2) === "d:") {
+    const parts = formatString.slice(2).split(",");
+    const precision = parseInt(parts[0]);
+    const scale = parseInt(parts[1]);
+    const bitWidth = parts[2] ? parseInt(parts[2]) : undefined;
+
+    const type = new arrow.Decimal(scale, precision, bitWidth);
+    return new arrow.Field(name, type, undefined, metadata);
+  }
+
+  // timestamp
+  if (formatString.slice(0, 2) === "ts") {
+    let timeUnit: arrow.TimeUnit | null = null;
+    switch (formatString[2]) {
+      case "s":
+        timeUnit = arrow.TimeUnit.SECOND;
+        break;
+      case "m":
+        timeUnit = arrow.TimeUnit.MILLISECOND;
+        break;
+      case "u":
+        timeUnit = arrow.TimeUnit.MICROSECOND;
+        break;
+      case "n":
+        timeUnit = arrow.TimeUnit.NANOSECOND;
+        break;
+
+      default:
+        throw new Error(`invalid timestamp ${formatString}`);
+    }
+
+    assert(formatString[3] === ":");
+    let timezone: string | null = null;
+    if (formatString.length > 4) {
+      timezone = formatString.slice(4);
+    }
+
+    const type = new arrow.Timestamp(timeUnit, timezone);
+    return new arrow.Field(name, type, undefined, metadata);
   }
 
   // struct

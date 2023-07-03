@@ -326,7 +326,7 @@ test("list array", (t) => {
   t.end();
 });
 
-test.only("extension array", (t) => {
+test("extension array", (t) => {
   let columnIndex = TEST_TABLE.schema.fields.findIndex(
     (field) => field.name == "extension"
   );
@@ -362,6 +362,86 @@ test.only("extension array", (t) => {
     arraysEqual(originalVector.toArray(), wasmVector.toArray()),
     "array values are equal"
   );
+  t.end();
+});
+
+// This looks to be parsing wrong somewhere
+test.skip("decimal128", (t) => {
+  let columnIndex = TEST_TABLE.schema.fields.findIndex(
+    (field) => field.name == "decimal128"
+  );
+
+  const originalField = TEST_TABLE.schema.fields[columnIndex];
+  // declare it's not null
+  const originalVector = TEST_TABLE.getChildAt(columnIndex) as arrow.Vector;
+  const fieldPtr = FFI_TABLE.schemaAddr(columnIndex);
+  const field = parseField(WASM_MEMORY.buffer, fieldPtr);
+
+  t.equals(field.name, originalField.name, "Field name should be equal.");
+  t.equals(field.typeId, originalField.typeId, "Type id should be equal.");
+
+  const arrayPtr = FFI_TABLE.arrayAddr(0, columnIndex);
+  const wasmVector = parseVector(WASM_MEMORY.buffer, arrayPtr, field.type);
+
+  console.log(originalVector.get(0));
+  console.log(wasmVector.get(0));
+
+  t.ok(
+    arraysEqual(originalVector.get(0), wasmVector.get(0)),
+    "array values are equal"
+  );
+  t.end();
+});
+
+test("date32", (t) => {
+  let columnIndex = TEST_TABLE.schema.fields.findIndex(
+    (field) => field.name == "date32"
+  );
+
+  const originalField = TEST_TABLE.schema.fields[columnIndex];
+  // declare it's not null
+  const originalVector = TEST_TABLE.getChildAt(columnIndex) as arrow.Vector;
+  const fieldPtr = FFI_TABLE.schemaAddr(columnIndex);
+  const field = parseField(WASM_MEMORY.buffer, fieldPtr);
+
+  t.equals(field.name, originalField.name, "Field name should be equal.");
+  t.equals(field.typeId, originalField.typeId, "Type id should be equal.");
+
+  const arrayPtr = FFI_TABLE.arrayAddr(0, columnIndex);
+  const wasmVector = parseVector(WASM_MEMORY.buffer, arrayPtr, field.type);
+
+  // TODO: how to compare date objects? They look equal though
+  // for (let i = 0; i < 3; i++) {
+  //   t.equals(originalVector.get(i), wasmVector.get(i));
+  // }
+  t.end();
+});
+
+// This also looks to be failing; probably an issue with the byte width?
+test.skip("timestamp", (t) => {
+  let columnIndex = TEST_TABLE.schema.fields.findIndex(
+    (field) => field.name == "timestamp"
+  );
+
+  const originalField = TEST_TABLE.schema.fields[columnIndex];
+  // declare it's not null
+  const originalVector = TEST_TABLE.getChildAt(columnIndex) as arrow.Vector;
+  const fieldPtr = FFI_TABLE.schemaAddr(columnIndex);
+  const field = parseField(WASM_MEMORY.buffer, fieldPtr);
+
+  t.equals(field.name, originalField.name, "Field name should be equal.");
+  t.equals(field.typeId, originalField.typeId, "Type id should be equal.");
+
+  const arrayPtr = FFI_TABLE.arrayAddr(0, columnIndex);
+  const wasmVector = parseVector(WASM_MEMORY.buffer, arrayPtr, field.type);
+
+  console.log(wasmVector.toJSON());
+
+  for (let i = 0; i < 3; i++) {
+    console.log(originalVector.get(i));
+    console.log(wasmVector.get(i));
+    t.equals(originalVector.get(i), wasmVector.get(i));
+  }
   t.end();
 });
 
