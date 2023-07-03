@@ -136,6 +136,11 @@ test("fixed size list", (t) => {
 
   t.equals(field.name, originalField.name, "Field name should be equal.");
   t.equals(field.typeId, originalField.typeId, "Type id should be equal.");
+  t.equals(
+    field.nullable,
+    originalField.nullable,
+    "Field nullability should be equal."
+  );
 
   const arrayPtr = FFI_TABLE.arrayAddr(0, columnIndex);
   const wasmVector = parseVector(WASM_MEMORY.buffer, arrayPtr, field.type);
@@ -162,6 +167,11 @@ test("struct", (t) => {
 
   t.equals(field.name, originalField.name, "Field name should be equal.");
   t.equals(field.typeId, originalField.typeId, "Type id should be equal.");
+  t.equals(
+    field.nullable,
+    originalField.nullable,
+    "Field nullability should be equal."
+  );
 
   const arrayPtr = FFI_TABLE.arrayAddr(0, columnIndex);
   const wasmVector = parseVector(WASM_MEMORY.buffer, arrayPtr, field.type);
@@ -197,6 +207,11 @@ test("binary", (t) => {
 
   t.equals(field.name, originalField.name, "Field name should be equal.");
   t.equals(field.typeId, originalField.typeId, "Type id should be equal.");
+  t.equals(
+    field.nullable,
+    originalField.nullable,
+    "Field nullability should be equal."
+  );
 
   const arrayPtr = FFI_TABLE.arrayAddr(0, columnIndex);
   const wasmVector = parseVector(WASM_MEMORY.buffer, arrayPtr, field.type);
@@ -229,6 +244,11 @@ test("string", (t) => {
 
   t.equals(field.name, originalField.name, "Field name should be equal.");
   t.equals(field.typeId, originalField.typeId, "Type id should be equal.");
+  t.equals(
+    field.nullable,
+    originalField.nullable,
+    "Field nullability should be equal."
+  );
 
   const arrayPtr = FFI_TABLE.arrayAddr(0, columnIndex);
   const wasmVector = parseVector(WASM_MEMORY.buffer, arrayPtr, field.type);
@@ -254,6 +274,11 @@ test("boolean", (t) => {
 
   t.equals(field.name, originalField.name, "Field name should be equal.");
   t.equals(field.typeId, originalField.typeId, "Type id should be equal.");
+  t.equals(
+    field.nullable,
+    originalField.nullable,
+    "Field nullability should be equal."
+  );
 
   const arrayPtr = FFI_TABLE.arrayAddr(0, columnIndex);
   const wasmVector = parseVector(WASM_MEMORY.buffer, arrayPtr, field.type);
@@ -279,6 +304,11 @@ test("null array", (t) => {
 
   t.equals(field.name, originalField.name, "Field name should be equal.");
   t.equals(field.typeId, originalField.typeId, "Type id should be equal.");
+  t.equals(
+    field.nullable,
+    originalField.nullable,
+    "Field nullability should be equal."
+  );
 
   const arrayPtr = FFI_TABLE.arrayAddr(0, columnIndex);
   const wasmVector = parseVector(WASM_MEMORY.buffer, arrayPtr, field.type);
@@ -304,6 +334,11 @@ test("list array", (t) => {
 
   t.equals(field.name, originalField.name, "Field name should be equal.");
   t.equals(field.typeId, originalField.typeId, "Type id should be equal.");
+  t.equals(
+    field.nullable,
+    originalField.nullable,
+    "Field nullability should be equal."
+  );
 
   const arrayPtr = FFI_TABLE.arrayAddr(0, columnIndex);
   const wasmVector = parseVector(WASM_MEMORY.buffer, arrayPtr, field.type);
@@ -339,6 +374,11 @@ test("extension array", (t) => {
 
   t.equals(field.name, originalField.name, "Field name should be equal.");
   t.equals(field.typeId, originalField.typeId, "Type id should be equal.");
+  t.equals(
+    field.nullable,
+    originalField.nullable,
+    "Field nullability should be equal."
+  );
   t.equals(
     field.metadata.size,
     originalField.metadata.size,
@@ -379,6 +419,11 @@ test.skip("decimal128", (t) => {
 
   t.equals(field.name, originalField.name, "Field name should be equal.");
   t.equals(field.typeId, originalField.typeId, "Type id should be equal.");
+  t.equals(
+    field.nullable,
+    originalField.nullable,
+    "Field nullability should be equal."
+  );
 
   const arrayPtr = FFI_TABLE.arrayAddr(0, columnIndex);
   const wasmVector = parseVector(WASM_MEMORY.buffer, arrayPtr, field.type);
@@ -406,6 +451,11 @@ test("date32", (t) => {
 
   t.equals(field.name, originalField.name, "Field name should be equal.");
   t.equals(field.typeId, originalField.typeId, "Type id should be equal.");
+  t.equals(
+    field.nullable,
+    originalField.nullable,
+    "Field nullability should be equal."
+  );
 
   const arrayPtr = FFI_TABLE.arrayAddr(0, columnIndex);
   const wasmVector = parseVector(WASM_MEMORY.buffer, arrayPtr, field.type);
@@ -431,6 +481,11 @@ test.skip("timestamp", (t) => {
 
   t.equals(field.name, originalField.name, "Field name should be equal.");
   t.equals(field.typeId, originalField.typeId, "Type id should be equal.");
+  t.equals(
+    field.nullable,
+    originalField.nullable,
+    "Field nullability should be equal."
+  );
 
   const arrayPtr = FFI_TABLE.arrayAddr(0, columnIndex);
   const wasmVector = parseVector(WASM_MEMORY.buffer, arrayPtr, field.type);

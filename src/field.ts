@@ -3,6 +3,12 @@
 import * as arrow from "apache-arrow";
 import { assert } from "./vector";
 
+interface Flags {
+  nullable: boolean;
+  dictionaryOrdered: boolean;
+  mapKeysSorted: boolean;
+}
+
 const UTF8_DECODER = new TextDecoder("utf-8");
 // Note: it looks like duration types don't yet exist in Arrow JS
 const formatMapping: Record<string, arrow.DataType | undefined> = {
@@ -49,7 +55,7 @@ export function parseField(buffer: ArrayBuffer, ptr: number) {
   const metadata = parseMetadata(dataView, metadataPtr);
 
   // Extra 4 to be 8-byte aligned
-  const flags = dataView.getBigInt64(ptr + 16, true);
+  const flags = parseFlags(dataView.getBigInt64(ptr + 16, true));
   const nChildren = dataView.getBigInt64(ptr + 24, true);
 
   const ptrToChildrenPtrs = dataView.getUint32(ptr + 32, true);
@@ -63,7 +69,7 @@ export function parseField(buffer: ArrayBuffer, ptr: number) {
 
   const primitiveType = formatMapping[formatString];
   if (primitiveType) {
-    return new arrow.Field(name, primitiveType, undefined, metadata);
+    return new arrow.Field(name, primitiveType, flags.nullable, metadata);
   }
 
   // decimal
@@ -74,7 +80,7 @@ export function parseField(buffer: ArrayBuffer, ptr: number) {
     const bitWidth = parts[2] ? parseInt(parts[2]) : undefined;
 
     const type = new arrow.Decimal(scale, precision, bitWidth);
-    return new arrow.Field(name, type, undefined, metadata);
+    return new arrow.Field(name, type, flags.nullable, metadata);
   }
 
   // timestamp
@@ -105,20 +111,20 @@ export function parseField(buffer: ArrayBuffer, ptr: number) {
     }
 
     const type = new arrow.Timestamp(timeUnit, timezone);
-    return new arrow.Field(name, type, undefined, metadata);
+    return new arrow.Field(name, type, flags.nullable, metadata);
   }
 
   // struct
   if (formatString === "+s") {
     const type = new arrow.Struct(childrenFields);
-    return new arrow.Field(name, type, undefined, metadata);
+    return new arrow.Field(name, type, flags.nullable, metadata);
   }
 
   // list
   if (formatString === "+l") {
     assert(childrenFields.length === 1);
     const type = new arrow.List(childrenFields[0]);
-    return new arrow.Field(name, type, undefined, metadata);
+    return new arrow.Field(name, type, flags.nullable, metadata);
   }
 
   // FixedSizeBinary
@@ -126,7 +132,7 @@ export function parseField(buffer: ArrayBuffer, ptr: number) {
     // The size of the binary is the integer after the colon
     const byteWidth = parseInt(formatString.slice(2));
     const type = new arrow.FixedSizeBinary(byteWidth);
-    return new arrow.Field(name, type, undefined, metadata);
+    return new arrow.Field(name, type, flags.nullable, metadata);
   }
 
   // FixedSizeList
@@ -135,10 +141,28 @@ export function parseField(buffer: ArrayBuffer, ptr: number) {
     // The size of the list is the integer after the colon
     const innerSize = parseInt(formatString.slice(3));
     const type = new arrow.FixedSizeList(innerSize, childrenFields[0]);
-    return new arrow.Field(name, type, undefined, metadata);
+    return new arrow.Field(name, type, flags.nullable, metadata);
   }
 
   throw new Error(`Unsupported format: ${formatString}`);
+}
+
+// https://stackoverflow.com/a/9954810
+function parseFlags(flag: bigint): Flags {
+  if (flag === 0n) {
+    return {
+      nullable: false,
+      dictionaryOrdered: false,
+      mapKeysSorted: false,
+    };
+  }
+
+  let parsed = flag.toString(2);
+  return {
+    nullable: parsed[0] === "1" ? true : false,
+    dictionaryOrdered: parsed[1] === "1" ? true : false,
+    mapKeysSorted: parsed[2] === "1" ? true : false,
+  };
 }
 
 /** Parse a null-terminated C-style string */
