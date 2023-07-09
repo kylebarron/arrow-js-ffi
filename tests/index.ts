@@ -1,1 +1,1 @@
-import "./ffi";
+import "./ffi.test";
