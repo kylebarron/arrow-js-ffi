@@ -63,9 +63,9 @@ Most of the unsupported types should be pretty straightforward to implement; the
 ### Binary & String
 
 - [x] Binary
-- [x] Large Binary (Not implemented by Arrow JS but supported by downcasting to Binary.)
+- [x] Large Binary (Not implemented by Arrow JS but supported by downcasting to `Binary`.)
 - [x] String
-- [x] Large String (Not implemented by Arrow JS but supported by downcasting to String.)
+- [x] Large String (Not implemented by Arrow JS but supported by downcasting to `String`.)
 - [x] Fixed-width Binary
 
 ### Decimal
@@ -86,7 +86,7 @@ Most of the unsupported types should be pretty straightforward to implement; the
 ### Nested Types
 
 - [x] List
-- [x] Large List (Not implemented by Arrow JS but supported by downcasting to String.)
+- [x] Large List (Not implemented by Arrow JS but supported by downcasting to `List`.)
 - [x] Fixed-size List
 - [x] Struct
 - [ ] Map
