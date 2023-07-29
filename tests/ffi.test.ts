@@ -76,63 +76,40 @@ const PRIMITIVE_NONNULL_FIXTURES: FixtureType[] = [
   },
 ];
 
-describe("primitive types non-null", () => {
-  it("", () => {
-    for (const fixture of PRIMITIVE_NONNULL_FIXTURES) {
-      const table = arrow.tableFromArrays({
-        col1: fixture.data,
-      });
-      const originalVector = table.getChildAt(0);
-      const ffiTable = arrowTableToFFI(table);
+describe("primitive types non-null", (t) => {
+  function test(fixture: FixtureType, copy: boolean) {
+    const table = arrow.tableFromArrays({
+      col1: fixture.data,
+    });
+    const originalVector = table.getChildAt(0);
+    const ffiTable = arrowTableToFFI(table);
 
-      const fieldPtr = ffiTable.schemaAddr(0);
-      const field = parseField(WASM_MEMORY.buffer, fieldPtr);
+    const fieldPtr = ffiTable.schemaAddr(0);
+    const field = parseField(WASM_MEMORY.buffer, fieldPtr);
 
-      expect(field.name).toStrictEqual("col1");
-      expect(field.typeId).toStrictEqual(fixture.dataType.typeId);
-      expect(field.nullable).toBeFalsy();
+    expect(field.name, "col1");
+    expect(field.typeId).toStrictEqual(fixture.dataType.typeId);
+    expect(field.nullable).toBeFalsy();
 
-      const arrayPtr = ffiTable.arrayAddr(0, 0);
-      const wasmVector = parseVector(WASM_MEMORY.buffer, arrayPtr, field.type);
-      expect(
-        arraysEqual(originalVector?.toArray(), wasmVector.toArray())
-      ).toBeTruthy();
-    }
-  });
-});
-
-describe("primitive types non-null with copy", (t) => {
-  it("", () => {
-    for (const fixture of PRIMITIVE_NONNULL_FIXTURES) {
-      const table = arrow.tableFromArrays({
-        col1: fixture.data,
-      });
-      const originalVector = table.getChildAt(0);
-      const ffiTable = arrowTableToFFI(table);
-
-      const fieldPtr = ffiTable.schemaAddr(0);
-      const field = parseField(WASM_MEMORY.buffer, fieldPtr);
-
-      expect(field.name, "col1");
-      expect(field.typeId).toStrictEqual(fixture.dataType.typeId);
-      expect(field.nullable).toBeFalsy();
-
-      const arrayPtr = ffiTable.arrayAddr(0, 0);
-      const wasmVector = parseVector(
-        WASM_MEMORY.buffer,
-        arrayPtr,
-        field.type,
-        true
-      );
-      expect(
-        arraysEqual(originalVector?.toArray(), wasmVector.toArray())
-      ).toBeTruthy();
-    }
-  });
+    const arrayPtr = ffiTable.arrayAddr(0, 0);
+    const wasmVector = parseVector(
+      WASM_MEMORY.buffer,
+      arrayPtr,
+      field.type,
+      copy
+    );
+    expect(
+      arraysEqual(originalVector?.toArray(), wasmVector.toArray())
+    ).toBeTruthy();
+  }
+  for (const fixture of PRIMITIVE_NONNULL_FIXTURES) {
+    it(`${fixture.dataType}, copy=false`, () => test(fixture, false));
+    it(`${fixture.dataType}, copy=true`, () => test(fixture, true));
+  }
 });
 
 describe("fixed size list", (t) => {
-  it("", () => {
+  function test(copy: boolean) {
     let columnIndex = TEST_TABLE.schema.fields.findIndex(
       (field) => field.name == "fixedsizelist"
     );
@@ -147,7 +124,12 @@ describe("fixed size list", (t) => {
     expect(field.nullable).toStrictEqual(originalField.nullable);
 
     const arrayPtr = FFI_TABLE.arrayAddr(0, columnIndex);
-    const wasmVector = parseVector(WASM_MEMORY.buffer, arrayPtr, field.type);
+    const wasmVector = parseVector(
+      WASM_MEMORY.buffer,
+      arrayPtr,
+      field.type,
+      copy
+    );
 
     expect(wasmVector.get(0).get(0)).toStrictEqual(1);
     expect(wasmVector.get(0).get(1)).toStrictEqual(2);
@@ -155,11 +137,14 @@ describe("fixed size list", (t) => {
     expect(wasmVector.get(1).get(1)).toStrictEqual(4);
     expect(wasmVector.get(2).get(0)).toStrictEqual(5);
     expect(wasmVector.get(2).get(1)).toStrictEqual(6);
-  });
+  }
+
+  it("copy=false", () => test(false));
+  it("copy=true", () => test(true));
 });
 
 describe("struct", (t) => {
-  it("", () => {
+  function test(copy: boolean) {
     let columnIndex = TEST_TABLE.schema.fields.findIndex(
       (field) => field.name == "struct"
     );
@@ -174,7 +159,12 @@ describe("struct", (t) => {
     expect(field.nullable).toStrictEqual(originalField.nullable);
 
     const arrayPtr = FFI_TABLE.arrayAddr(0, columnIndex);
-    const wasmVector = parseVector(WASM_MEMORY.buffer, arrayPtr, field.type);
+    const wasmVector = parseVector(
+      WASM_MEMORY.buffer,
+      arrayPtr,
+      field.type,
+      copy
+    );
 
     expect(
       arraysEqual(
@@ -188,11 +178,14 @@ describe("struct", (t) => {
         wasmVector?.getChildAt(1)?.toArray()
       )
     ).toBeTruthy();
-  });
+  }
+
+  it("copy=false", () => test(false));
+  it("copy=true", () => test(true));
 });
 
 describe("binary", (t) => {
-  it("", () => {
+  function test(copy: boolean) {
     let columnIndex = TEST_TABLE.schema.fields.findIndex(
       (field) => field.name == "binary"
     );
@@ -208,7 +201,12 @@ describe("binary", (t) => {
     expect(field.nullable).toStrictEqual(originalField.nullable);
 
     const arrayPtr = FFI_TABLE.arrayAddr(0, columnIndex);
-    const wasmVector = parseVector(WASM_MEMORY.buffer, arrayPtr, field.type);
+    const wasmVector = parseVector(
+      WASM_MEMORY.buffer,
+      arrayPtr,
+      field.type,
+      copy
+    );
 
     expect(
       arraysEqual(
@@ -219,11 +217,14 @@ describe("binary", (t) => {
     expect(
       arraysEqual(originalVector?.data[0]?.values, wasmVector?.data[0]?.values)
     ).toBeTruthy();
-  });
+  }
+
+  it("copy=false", () => test(false));
+  it("copy=true", () => test(true));
 });
 
 describe("string", (t) => {
-  it("", () => {
+  function test(copy: boolean) {
     let columnIndex = TEST_TABLE.schema.fields.findIndex(
       (field) => field.name == "string"
     );
@@ -239,16 +240,24 @@ describe("string", (t) => {
     expect(field.nullable).toStrictEqual(originalField.nullable);
 
     const arrayPtr = FFI_TABLE.arrayAddr(0, columnIndex);
-    const wasmVector = parseVector(WASM_MEMORY.buffer, arrayPtr, field.type);
+    const wasmVector = parseVector(
+      WASM_MEMORY.buffer,
+      arrayPtr,
+      field.type,
+      copy
+    );
 
     expect(
       arraysEqual(originalVector.toArray(), wasmVector.toArray())
     ).toBeTruthy();
-  });
+  }
+
+  it("copy=false", () => test(false));
+  it("copy=true", () => test(true));
 });
 
 describe("boolean", (t) => {
-  it("", () => {
+  function test(copy: boolean) {
     let columnIndex = TEST_TABLE.schema.fields.findIndex(
       (field) => field.name == "boolean"
     );
@@ -264,16 +273,24 @@ describe("boolean", (t) => {
     expect(field.nullable).toStrictEqual(originalField.nullable);
 
     const arrayPtr = FFI_TABLE.arrayAddr(0, columnIndex);
-    const wasmVector = parseVector(WASM_MEMORY.buffer, arrayPtr, field.type);
+    const wasmVector = parseVector(
+      WASM_MEMORY.buffer,
+      arrayPtr,
+      field.type,
+      copy
+    );
 
     expect(
       arraysEqual(originalVector.toArray(), wasmVector.toArray())
     ).toBeTruthy();
-  });
+  }
+
+  it("copy=false", () => test(false));
+  it("copy=true", () => test(true));
 });
 
 describe("null array", (t) => {
-  it("", () => {
+  function test(copy: boolean) {
     let columnIndex = TEST_TABLE.schema.fields.findIndex(
       (field) => field.name == "null"
     );
@@ -289,16 +306,24 @@ describe("null array", (t) => {
     expect(field.nullable).toStrictEqual(originalField.nullable);
 
     const arrayPtr = FFI_TABLE.arrayAddr(0, columnIndex);
-    const wasmVector = parseVector(WASM_MEMORY.buffer, arrayPtr, field.type);
+    const wasmVector = parseVector(
+      WASM_MEMORY.buffer,
+      arrayPtr,
+      field.type,
+      copy
+    );
 
     expect(
       arraysEqual(originalVector.toArray(), wasmVector.toArray())
     ).toBeTruthy();
-  });
+  }
+
+  it("copy=false", () => test(false));
+  it("copy=true", () => test(true));
 });
 
 describe("list array", (t) => {
-  it("", () => {
+  function test(copy: boolean) {
     let columnIndex = TEST_TABLE.schema.fields.findIndex(
       (field) => field.name == "list"
     );
@@ -314,7 +339,12 @@ describe("list array", (t) => {
     expect(field.nullable).toStrictEqual(originalField.nullable);
 
     const arrayPtr = FFI_TABLE.arrayAddr(0, columnIndex);
-    const wasmVector = parseVector(WASM_MEMORY.buffer, arrayPtr, field.type);
+    const wasmVector = parseVector(
+      WASM_MEMORY.buffer,
+      arrayPtr,
+      field.type,
+      copy
+    );
 
     expect(
       arraysEqual(
@@ -328,11 +358,14 @@ describe("list array", (t) => {
         wasmVector.data[0].valueOffsets
       )
     ).toBeTruthy();
-  });
+  }
+
+  it("copy=false", () => test(false));
+  it("copy=true", () => test(true));
 });
 
 describe("extension array", (t) => {
-  it("", () => {
+  function test(copy: boolean) {
     let columnIndex = TEST_TABLE.schema.fields.findIndex(
       (field) => field.name == "extension"
     );
@@ -360,12 +393,20 @@ describe("extension array", (t) => {
     ).toStrictEqual(originalField.metadata.get("ARROW:extension:metadata"));
 
     const arrayPtr = FFI_TABLE.arrayAddr(0, columnIndex);
-    const wasmVector = parseVector(WASM_MEMORY.buffer, arrayPtr, field.type);
+    const wasmVector = parseVector(
+      WASM_MEMORY.buffer,
+      arrayPtr,
+      field.type,
+      copy
+    );
 
     expect(
       arraysEqual(originalVector.toArray(), wasmVector.toArray())
     ).toBeTruthy();
-  });
+  }
+
+  it("copy=false", () => test(false));
+  it("copy=true", () => test(true));
 });
 
 // This looks to be parsing wrong somewhere
@@ -397,7 +438,7 @@ test.skip("decimal128", (t) => {
 });
 
 describe("date32", (t) => {
-  it("", () => {
+  function test(copy: boolean) {
     let columnIndex = TEST_TABLE.schema.fields.findIndex(
       (field) => field.name == "date32"
     );
@@ -413,13 +454,21 @@ describe("date32", (t) => {
     expect(field.nullable).toStrictEqual(originalField.nullable);
 
     const arrayPtr = FFI_TABLE.arrayAddr(0, columnIndex);
-    const wasmVector = parseVector(WASM_MEMORY.buffer, arrayPtr, field.type);
+    const wasmVector = parseVector(
+      WASM_MEMORY.buffer,
+      arrayPtr,
+      field.type,
+      copy
+    );
 
     // TODO: how to compare date objects? They look equal though
     // for (let i = 0; i < 3; i++) {
     //   expect(originalVector.get(i), wasmVector.get(i));
     // }
-  });
+  }
+
+  it("copy=false", () => test(false));
+  it("copy=true", () => test(true));
 });
 
 // This also looks to be failing; probably an issue with the byte width?
