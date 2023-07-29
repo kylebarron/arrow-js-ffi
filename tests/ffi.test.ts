@@ -368,32 +368,30 @@ describe("extension array", (t) => {
   });
 });
 
-// This looks to be parsing wrong somewhere
-test.skip("decimal128", (t) => {
-  let columnIndex = TEST_TABLE.schema.fields.findIndex(
-    (field) => field.name == "decimal128"
-  );
+describe("decimal128", (t) => {
+  it("", () => {
+    let columnIndex = TEST_TABLE.schema.fields.findIndex(
+      (field) => field.name == "decimal128"
+    );
 
-  const originalField = TEST_TABLE.schema.fields[columnIndex];
-  // declare it's not null
-  const originalVector = TEST_TABLE.getChildAt(columnIndex) as arrow.Vector;
-  const fieldPtr = FFI_TABLE.schemaAddr(columnIndex);
-  const field = parseField(WASM_MEMORY.buffer, fieldPtr);
+    const originalField = TEST_TABLE.schema.fields[columnIndex];
+    // declare it's not null
+    const originalVector = TEST_TABLE.getChildAt(columnIndex) as arrow.Vector;
+    const fieldPtr = FFI_TABLE.schemaAddr(columnIndex);
+    const field = parseField(WASM_MEMORY.buffer, fieldPtr);
 
-  expect(field.name).toStrictEqual(originalField.name);
-  expect(field.typeId).toStrictEqual(originalField.typeId);
-  expect(field.nullable).toStrictEqual(originalField.nullable);
+    expect(field.name).toStrictEqual(originalField.name);
+    expect(field.typeId).toStrictEqual(originalField.typeId);
+    expect(field.nullable).toStrictEqual(originalField.nullable);
 
-  const arrayPtr = FFI_TABLE.arrayAddr(0, columnIndex);
-  const wasmVector = parseVector(WASM_MEMORY.buffer, arrayPtr, field.type);
+    const arrayPtr = FFI_TABLE.arrayAddr(0, columnIndex);
+    const wasmVector = parseVector(WASM_MEMORY.buffer, arrayPtr, field.type);
 
-  console.log(originalVector.get(0));
-  console.log(wasmVector.get(0));
+    console.log(originalVector.get(0));
+    console.log(wasmVector.get(0));
 
-  t.ok(
-    arraysEqual(originalVector.get(0), wasmVector.get(0)),
-    "array values are equal"
-  );
+    expect(arraysEqual(originalVector.get(0), wasmVector.get(0))).toBeTruthy();
+  });
 });
 
 describe("date32", (t) => {
