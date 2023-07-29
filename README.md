@@ -63,9 +63,9 @@ Most of the unsupported types should be pretty straightforward to implement; the
 ### Binary & String
 
 - [x] Binary
-- [ ] Large Binary (with int64 offsets. Not supported by Arrow JS but we can implement downcasting in the future.)
+- [x] Large Binary (Not implemented by Arrow JS but supported by downcasting to `Binary`.)
 - [x] String
-- [ ] Large String (with int64 offsets. Not supported by Arrow JS but we can implement downcasting in the future.)
+- [x] Large String (Not implemented by Arrow JS but supported by downcasting to `String`.)
 - [x] Fixed-width Binary
 
 ### Decimal
@@ -86,7 +86,7 @@ Most of the unsupported types should be pretty straightforward to implement; the
 ### Nested Types
 
 - [x] List
-- [ ] Large List (with int64 offsets. Not supported by Arrow JS but we can implement downcasting in the future.)
+- [x] Large List (Not implemented by Arrow JS but supported by downcasting to `List`.)
 - [x] Fixed-size List
 - [x] Struct
 - [ ] Map
@@ -101,4 +101,3 @@ Most of the unsupported types should be pretty straightforward to implement; the
 ## TODO:
 
 - Call the release callback on the C structs. This requires figuring out how to call C function pointers from JS.
-

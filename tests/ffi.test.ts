@@ -1,9 +1,11 @@
+import { readFileSync } from "fs";
 import * as test from "tape";
 import { describe, it, expect } from "vitest";
 import * as arrow from "apache-arrow";
 import * as wasm from "rust-arrow-ffi";
 import { arrowTableToFFI, arraysEqual, loadIPCTableFromDisk } from "./utils";
 import { parseField, parseVector } from "../src";
+import { Type } from "../src/types";
 
 wasm.setPanicHook();
 
@@ -223,6 +225,48 @@ describe("binary", (t) => {
   it("copy=true", () => test(true));
 });
 
+describe("large_binary", (t) => {
+  it("", () => {
+    // Arrow JS can't parse the IPC buffer including the LargeBinary column, so we have a separate
+    // large_table.arrow file with the LargeBinary column, with the same values as the Binary column
+
+    // First read the small binary vector from the table Arrow JS can read
+    let smallTableColumnIndex = TEST_TABLE.schema.fields.findIndex(
+      (field) => field.name == "binary"
+    );
+
+    const originalVector = TEST_TABLE.getChildAt(
+      smallTableColumnIndex
+    ) as arrow.Vector;
+
+    // Then read the large table
+    const tableBuffer = readFileSync("tests/large_table.arrow");
+    let ffiTable = wasm.arrowIPCToFFI(tableBuffer);
+
+    // This is hard-coded based on the order in pyarrow_generate_data.py
+    let columnIndex = 0;
+
+    const fieldPtr = ffiTable.schemaAddr(columnIndex);
+    const field = parseField(WASM_MEMORY.buffer, fieldPtr);
+
+    expect(field.name).toStrictEqual("large_binary");
+    expect(field.typeId).toStrictEqual(Type.LargeBinary);
+
+    const arrayPtr = ffiTable.arrayAddr(0, columnIndex);
+    const wasmVector = parseVector(WASM_MEMORY.buffer, arrayPtr, field.type);
+
+    expect(
+      arraysEqual(
+        originalVector?.data[0]?.valueOffsets,
+        wasmVector?.data[0]?.valueOffsets
+      )
+    ).toBeTruthy();
+    expect(
+      arraysEqual(originalVector?.data[0]?.values, wasmVector?.data[0]?.values)
+    ).toBeTruthy();
+  });
+});
+
 describe("string", (t) => {
   function test(copy: boolean) {
     let columnIndex = TEST_TABLE.schema.fields.findIndex(
@@ -254,6 +298,42 @@ describe("string", (t) => {
 
   it("copy=false", () => test(false));
   it("copy=true", () => test(true));
+});
+
+describe("large_string", (t) => {
+  it("", () => {
+    // Arrow JS can't parse the IPC buffer including the LargeString column, so we have a separate
+    // large_table.arrow file with the LargeString column, with the same values as the String column
+
+    // First read the small string vector from the table Arrow JS can read
+    let smallTableColumnIndex = TEST_TABLE.schema.fields.findIndex(
+      (field) => field.name == "string"
+    );
+
+    const originalVector = TEST_TABLE.getChildAt(
+      smallTableColumnIndex
+    ) as arrow.Vector;
+
+    // Then read the large table
+    const tableBuffer = readFileSync("tests/large_table.arrow");
+    let ffiTable = wasm.arrowIPCToFFI(tableBuffer);
+
+    // This is hard-coded based on the order in pyarrow_generate_data.py
+    let columnIndex = 1;
+
+    const fieldPtr = ffiTable.schemaAddr(columnIndex);
+    const field = parseField(WASM_MEMORY.buffer, fieldPtr);
+
+    expect(field.name).toStrictEqual("large_string");
+    expect(field.typeId).toStrictEqual(Type.LargeUtf8);
+
+    const arrayPtr = ffiTable.arrayAddr(0, columnIndex);
+    const wasmVector = parseVector(WASM_MEMORY.buffer, arrayPtr, field.type);
+
+    expect(
+      arraysEqual(originalVector.toArray(), wasmVector.toArray())
+    ).toBeTruthy();
+  });
 });
 
 describe("boolean", (t) => {
@@ -362,6 +442,51 @@ describe("list array", (t) => {
 
   it("copy=false", () => test(false));
   it("copy=true", () => test(true));
+});
+
+describe("large list array", (t) => {
+  it("", () => {
+    // Arrow JS can't parse the IPC buffer including the LargeList column, so we have a separate
+    // large_table.arrow file with the LargeList column, with the same values as the List column
+
+    // First read the small string vector from the table Arrow JS can read
+    let smallTableColumnIndex = TEST_TABLE.schema.fields.findIndex(
+      (field) => field.name == "list"
+    );
+
+    const originalVector = TEST_TABLE.getChildAt(
+      smallTableColumnIndex
+    ) as arrow.Vector;
+
+    // Then read the large table
+    const tableBuffer = readFileSync("tests/large_table.arrow");
+    let ffiTable = wasm.arrowIPCToFFI(tableBuffer);
+
+    // This is hard-coded based on the order in pyarrow_generate_data.py
+    let columnIndex = 2;
+
+    const fieldPtr = ffiTable.schemaAddr(columnIndex);
+    const field = parseField(WASM_MEMORY.buffer, fieldPtr);
+
+    expect(field.name).toStrictEqual("large_list");
+    expect(field.typeId).toStrictEqual(Type.LargeList);
+
+    const arrayPtr = ffiTable.arrayAddr(0, columnIndex);
+    const wasmVector = parseVector(WASM_MEMORY.buffer, arrayPtr, field.type);
+
+    expect(
+      arraysEqual(
+        originalVector.getChildAt(0)?.toArray(),
+        wasmVector.getChildAt(0)?.toArray()
+      )
+    ).toBeTruthy();
+    expect(
+      arraysEqual(
+        originalVector.data[0].valueOffsets,
+        wasmVector.data[0].valueOffsets
+      )
+    ).toBeTruthy();
+  });
 });
 
 describe("extension array", (t) => {

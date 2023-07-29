@@ -2,6 +2,7 @@
 
 import * as arrow from "apache-arrow";
 import { assert } from "./vector";
+import { LargeBinary, LargeList, LargeUtf8} from './types';
 
 interface Flags {
   nullable: boolean;
@@ -26,9 +27,9 @@ const formatMapping: Record<string, arrow.DataType | undefined> = {
   f: new arrow.Float32(),
   g: new arrow.Float64(),
   z: new arrow.Binary(),
-  // Z: Type.LargeBinary,
+  Z: new LargeBinary(),
   u: new arrow.Utf8(),
-  // U: Type.LargeUtf8,
+  U: new LargeUtf8(),
   tdD: new arrow.DateDay(),
   tdm: new arrow.DateMillisecond(),
   tts: new arrow.TimeSecond(),
@@ -127,6 +128,13 @@ export function parseField(buffer: ArrayBuffer, ptr: number): arrow.Field {
   if (formatString === "+l") {
     assert(childrenFields.length === 1);
     const type = new arrow.List(childrenFields[0]);
+    return new arrow.Field(name, type, flags.nullable, metadata);
+  }
+
+  // large list
+  if (formatString === "+L") {
+    assert(childrenFields.length === 1);
+    const type = new LargeList(childrenFields[0]);
     return new arrow.Field(name, type, flags.nullable, metadata);
   }
 

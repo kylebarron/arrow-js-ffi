@@ -23,6 +23,15 @@ def binary_array() -> pa.Array:
     return arr
 
 
+def large_binary_array() -> pa.Array:
+    # For some reason you can't pass pa.large_binary() directly into pa.array, you need
+    # to upcast from an existing binary array
+    small_arr = pa.array(np.array([b"a", b"ab", b"abc"]), type=pa.binary())
+    large_arr = small_arr.cast(pa.large_binary())
+    assert isinstance(large_arr, pa.LargeBinaryArray)
+    return large_arr
+
+
 def fixed_size_binary_array() -> pa.Array:
     # TODO: don't know how to construct this with pyarrow?
     arr = pa.array(np.array([b"a", b"b", b"c"]))
@@ -33,6 +42,12 @@ def fixed_size_binary_array() -> pa.Array:
 def string_array() -> pa.Array:
     arr = pa.StringArray.from_pandas(["a", "foo", "barbaz"])
     assert isinstance(arr, pa.StringArray)
+    return arr
+
+
+def large_string_array() -> pa.Array:
+    arr = pa.array(["a", "foo", "barbaz"], type=pa.large_string())
+    assert isinstance(arr, pa.LargeStringArray)
     return arr
 
 
@@ -53,6 +68,14 @@ def list_array() -> pa.Array:
     offsets = pa.array([0, 1, 3, 6], type=pa.int32())
     arr = pa.ListArray.from_arrays(offsets, values)
     assert isinstance(arr, pa.ListArray)
+    return arr
+
+
+def large_list_array() -> pa.Array:
+    values = pa.array([1, 2, 3, 4, 5, 6], type=pa.uint8())
+    offsets = pa.array([0, 1, 3, 6], type=pa.int64())
+    arr = pa.LargeListArray.from_arrays(offsets, values)
+    assert isinstance(arr, pa.LargeListArray)
     return arr
 
 
@@ -141,8 +164,22 @@ def table() -> pa.Table:
     )
 
 
+def large_table() -> pa.Table:
+    # Important: the order of these columns cannot change
+    return pa.table(
+        {
+            "large_binary": large_binary_array(),
+            "large_string": large_string_array(),
+            "large_list": large_list_array(),
+        }
+    )
+
+
 def main():
     feather.write_feather(table(), "table.arrow", compression="uncompressed")
+    feather.write_feather(
+        large_table(), "large_table.arrow", compression="uncompressed"
+    )
 
 
 if __name__ == "__main__":
