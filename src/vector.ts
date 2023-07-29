@@ -1,5 +1,6 @@
 import * as arrow from "apache-arrow";
 import { DataType } from "apache-arrow";
+import { LargeList, isLargeBinary, isLargeList, isLargeUtf8 } from "./types";
 
 type NullBitmap = Uint8Array | null | undefined;
 
@@ -243,6 +244,44 @@ function parseData<T extends DataType>(
     });
   }
 
+  if (isLargeBinary(dataType)) {
+    const [validityPtr, offsetsPtr, dataPtr] = bufferPtrs;
+    const nullBitmap = parseNullBitmap(dataView.buffer, validityPtr, copy);
+
+    // The original value offsets are an Int64Array, which Arrow JS does not yet support natively
+    const originalValueOffsets = new BigInt64Array(
+      dataView.buffer,
+      offsetsPtr,
+      length + 1
+    );
+
+    // Copy the Int64Array to an Int32Array
+    const valueOffsets = new Int32Array(length + 1);
+    for (let i = 0; i < originalValueOffsets.length; i++) {
+      valueOffsets[i] = Number(originalValueOffsets[i]);
+    }
+
+    // The length described in pointer is the number of elements. The last element in `valueOffsets`
+    // stores the maximum offset in the buffer and thus the byte length
+    const byteLength = valueOffsets[valueOffsets.length - 1];
+
+    const data = copy
+      ? new Uint8Array(copyBuffer(dataView.buffer, dataPtr, byteLength))
+      : new Uint8Array(dataView.buffer, dataPtr, byteLength);
+
+    // @ts-expect-error The return type is inferred wrong because we're coercing from a LargeBinary
+    // to a Binary
+    return arrow.makeData({
+      type: new arrow.Binary(),
+      offset,
+      length,
+      nullCount,
+      nullBitmap,
+      valueOffsets,
+      data,
+    });
+  }
+
   if (DataType.isUtf8(dataType)) {
     const [validityPtr, offsetsPtr, dataPtr] = bufferPtrs;
     const nullBitmap = parseNullBitmap(dataView.buffer, validityPtr, copy);
@@ -266,6 +305,44 @@ function parseData<T extends DataType>(
       : new dataType.ArrayType(dataView.buffer, dataPtr, byteLength);
     return arrow.makeData({
       type: dataType,
+      offset,
+      length,
+      nullCount,
+      nullBitmap,
+      valueOffsets,
+      data,
+    });
+  }
+
+  if (isLargeUtf8(dataType)) {
+    const [validityPtr, offsetsPtr, dataPtr] = bufferPtrs;
+    const nullBitmap = parseNullBitmap(dataView.buffer, validityPtr, copy);
+
+    // The original value offsets are an Int64Array, which Arrow JS does not yet support natively
+    const originalValueOffsets = new BigInt64Array(
+      dataView.buffer,
+      offsetsPtr,
+      length + 1
+    );
+
+    // Copy the Int64Array to an Int32Array
+    const valueOffsets = new Int32Array(length + 1);
+    for (let i = 0; i < originalValueOffsets.length; i++) {
+      valueOffsets[i] = Number(originalValueOffsets[i]);
+    }
+
+    // The length described in pointer is the number of elements. The last element in `valueOffsets`
+    // stores the maximum offset in the buffer and thus the byte length
+    const byteLength = valueOffsets[valueOffsets.length - 1];
+
+    const data = copy
+      ? new Uint8Array(copyBuffer(dataView.buffer, dataPtr, byteLength))
+      : new Uint8Array(dataView.buffer, dataPtr, byteLength);
+
+    // @ts-expect-error The return type is inferred wrong because we're coercing from a LargeUtf8 to
+    // a Utf8
+    return arrow.makeData({
+      type: new arrow.Utf8(),
       offset,
       length,
       nullCount,
@@ -316,6 +393,41 @@ function parseData<T extends DataType>(
 
     return arrow.makeData({
       type: dataType,
+      offset,
+      length,
+      nullCount,
+      nullBitmap,
+      valueOffsets,
+      child: childData,
+    });
+  }
+
+  if (isLargeList(dataType)) {
+    dataType;
+    assert(nChildren === 1);
+    const [validityPtr, offsetsPtr] = bufferPtrs;
+    const nullBitmap = parseNullBitmap(dataView.buffer, validityPtr, copy);
+
+    // The original value offsets are an Int64Array, which Arrow JS does not yet support natively
+    const originalValueOffsets = new BigInt64Array(
+      dataView.buffer,
+      offsetsPtr,
+      length + 1
+    );
+
+    // Copy the Int64Array to an Int32Array
+    const valueOffsets = new Int32Array(length + 1);
+    for (let i = 0; i < originalValueOffsets.length; i++) {
+      valueOffsets[i] = Number(originalValueOffsets[i]);
+    }
+
+    assert(children[0].data.length === 1);
+    let childData = children[0].data[0];
+
+    // @ts-expect-error The return type is inferred wrong because we're coercing from a LargeList to
+    // a List
+    return arrow.makeData({
+      type: new arrow.List((dataType as LargeList).children[0]),
       offset,
       length,
       nullCount,
