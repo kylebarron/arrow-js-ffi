@@ -22,7 +22,7 @@ export function parseVector<T extends DataType>(
   return arrow.makeVector(data);
 }
 
-function parseData<T extends DataType>(
+export function parseData<T extends DataType>(
   buffer: ArrayBuffer,
   ptr: number,
   dataType: T,
