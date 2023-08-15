@@ -1,5 +1,5 @@
 use crate::error::{ArrowFFIError, Result};
-use arrow2::array::Array;
+use arrow2::array::{Array, StructArray};
 use arrow2::chunk::Chunk;
 use arrow2::datatypes::{DataType, Field, Schema};
 use arrow2::ffi;
@@ -66,6 +66,43 @@ impl FFIArrowField {
     #[wasm_bindgen]
     pub fn addr(&self) -> *const ffi::ArrowSchema {
         self.0.as_ref() as *const _
+    }
+}
+
+/// Wrapper an Arrow RecordBatch stored as FFI in Wasm memory.
+#[wasm_bindgen]
+pub struct FFIArrowRecordBatch {
+    field: Box<ffi::ArrowSchema>,
+    array: Box<ffi::ArrowArray>,
+}
+
+impl FFIArrowRecordBatch {
+    pub fn new(field: Box<ffi::ArrowSchema>, array: Box<ffi::ArrowArray>) -> Self {
+        Self { field, array }
+    }
+
+    pub fn from_chunk(chunk: Chunk<Box<dyn Array>>, schema: Schema) -> Self {
+        let data_type = DataType::Struct(schema.fields);
+        let struct_array = StructArray::try_new(data_type.clone(), chunk.to_vec(), None).unwrap();
+        let field = Field::new("", data_type, false).with_metadata(schema.metadata);
+
+        Self {
+            field: Box::new(ffi::export_field_to_c(&field)),
+            array: Box::new(ffi::export_array_to_c(struct_array.boxed())),
+        }
+    }
+}
+
+#[wasm_bindgen]
+impl FFIArrowRecordBatch {
+    #[wasm_bindgen]
+    pub fn array_addr(&self) -> *const ffi::ArrowArray {
+        self.array.as_ref() as *const _
+    }
+
+    #[wasm_bindgen]
+    pub fn field_addr(&self) -> *const ffi::ArrowSchema {
+        self.field.as_ref() as *const _
     }
 }
 
