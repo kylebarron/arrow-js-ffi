@@ -1,5 +1,4 @@
 import { readFileSync } from "fs";
-import * as test from "tape";
 import { describe, it, expect } from "vitest";
 import * as arrow from "apache-arrow";
 import * as wasm from "rust-arrow-ffi";
@@ -534,33 +533,33 @@ describe("extension array", (t) => {
   it("copy=true", () => test(true));
 });
 
-// This looks to be parsing wrong somewhere
-test.skip("decimal128", (t) => {
-  let columnIndex = TEST_TABLE.schema.fields.findIndex(
-    (field) => field.name == "decimal128"
-  );
+// // This looks to be parsing wrong somewhere
+// test.skip("decimal128", (t) => {
+//   let columnIndex = TEST_TABLE.schema.fields.findIndex(
+//     (field) => field.name == "decimal128"
+//   );
 
-  const originalField = TEST_TABLE.schema.fields[columnIndex];
-  // declare it's not null
-  const originalVector = TEST_TABLE.getChildAt(columnIndex) as arrow.Vector;
-  const fieldPtr = FFI_TABLE.schemaAddr(columnIndex);
-  const field = parseField(WASM_MEMORY.buffer, fieldPtr);
+//   const originalField = TEST_TABLE.schema.fields[columnIndex];
+//   // declare it's not null
+//   const originalVector = TEST_TABLE.getChildAt(columnIndex) as arrow.Vector;
+//   const fieldPtr = FFI_TABLE.schemaAddr(columnIndex);
+//   const field = parseField(WASM_MEMORY.buffer, fieldPtr);
 
-  expect(field.name).toStrictEqual(originalField.name);
-  expect(field.typeId).toStrictEqual(originalField.typeId);
-  expect(field.nullable).toStrictEqual(originalField.nullable);
+//   expect(field.name).toStrictEqual(originalField.name);
+//   expect(field.typeId).toStrictEqual(originalField.typeId);
+//   expect(field.nullable).toStrictEqual(originalField.nullable);
 
-  const arrayPtr = FFI_TABLE.arrayAddr(0, columnIndex);
-  const wasmVector = parseVector(WASM_MEMORY.buffer, arrayPtr, field.type);
+//   const arrayPtr = FFI_TABLE.arrayAddr(0, columnIndex);
+//   const wasmVector = parseVector(WASM_MEMORY.buffer, arrayPtr, field.type);
 
-  console.log(originalVector.get(0));
-  console.log(wasmVector.get(0));
+//   console.log(originalVector.get(0));
+//   console.log(wasmVector.get(0));
 
-  t.ok(
-    arraysEqual(originalVector.get(0), wasmVector.get(0)),
-    "array values are equal"
-  );
-});
+//   t.ok(
+//     arraysEqual(originalVector.get(0), wasmVector.get(0)),
+//     "array values are equal"
+//   );
+// });
 
 describe("date32", (t) => {
   function test(copy: boolean) {
@@ -596,30 +595,30 @@ describe("date32", (t) => {
   it("copy=true", () => test(true));
 });
 
-// This also looks to be failing; probably an issue with the byte width?
-test.skip("timestamp", (t) => {
-  let columnIndex = TEST_TABLE.schema.fields.findIndex(
-    (field) => field.name == "timestamp"
-  );
+// // This also looks to be failing; probably an issue with the byte width?
+// test.skip("timestamp", (t) => {
+//   let columnIndex = TEST_TABLE.schema.fields.findIndex(
+//     (field) => field.name == "timestamp"
+//   );
 
-  const originalField = TEST_TABLE.schema.fields[columnIndex];
-  // declare it's not null
-  const originalVector = TEST_TABLE.getChildAt(columnIndex) as arrow.Vector;
-  const fieldPtr = FFI_TABLE.schemaAddr(columnIndex);
-  const field = parseField(WASM_MEMORY.buffer, fieldPtr);
+//   const originalField = TEST_TABLE.schema.fields[columnIndex];
+//   // declare it's not null
+//   const originalVector = TEST_TABLE.getChildAt(columnIndex) as arrow.Vector;
+//   const fieldPtr = FFI_TABLE.schemaAddr(columnIndex);
+//   const field = parseField(WASM_MEMORY.buffer, fieldPtr);
 
-  expect(field.name).toStrictEqual(originalField.name);
-  expect(field.typeId).toStrictEqual(originalField.typeId);
-  expect(field.nullable).toStrictEqual(originalField.nullable);
+//   expect(field.name).toStrictEqual(originalField.name);
+//   expect(field.typeId).toStrictEqual(originalField.typeId);
+//   expect(field.nullable).toStrictEqual(originalField.nullable);
 
-  const arrayPtr = FFI_TABLE.arrayAddr(0, columnIndex);
-  const wasmVector = parseVector(WASM_MEMORY.buffer, arrayPtr, field.type);
+//   const arrayPtr = FFI_TABLE.arrayAddr(0, columnIndex);
+//   const wasmVector = parseVector(WASM_MEMORY.buffer, arrayPtr, field.type);
 
-  console.log(wasmVector.toJSON());
+//   console.log(wasmVector.toJSON());
 
-  for (let i = 0; i < 3; i++) {
-    console.log(originalVector.get(i));
-    console.log(wasmVector.get(i));
-    expect(originalVector.get(i), wasmVector.get(i));
-  }
-});
+//   for (let i = 0; i < 3; i++) {
+//     console.log(originalVector.get(i));
+//     console.log(wasmVector.get(i));
+//     expect(originalVector.get(i), wasmVector.get(i));
+//   }
+// });
