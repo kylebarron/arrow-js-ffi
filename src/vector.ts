@@ -49,7 +49,8 @@ export function parseData<T extends DataType>(
     children[i] = parseVector(
       buffer,
       dataView.getUint32(ptrToChildrenPtrs + i * 4, true),
-      dataType.children[i].type
+      dataType.children[i].type,
+      copy
     );
   }
 
