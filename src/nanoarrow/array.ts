@@ -22,14 +22,14 @@ export interface ArrowArray {
    *
    * Buffers of children arrays are not included.
    */
-  nBuffers: number;
+  // nBuffers: number;
 
   /**
    * The number of children this array has. The number of children is a function of the data type,
    * as described in the [Columnar format
    * specification](https://arrow.apache.org/docs/format/Columnar.html#format-columnar).
    */
-  nChildren: number;
+  // nChildren: number;
 
   /**
    * An array of buffers backing this array. There must be `n_buffers` objects.

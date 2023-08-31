@@ -1,20 +1,50 @@
-import * as arrow from "apache-arrow";
-import { DataType } from "apache-arrow";
 import { ArrowArray, ArrowSchema } from "../nanoarrow";
-// import { LargeList, isLargeBinary, isLargeList, isLargeUtf8 } from "./types";
+import { ArrowStaticType } from "../nanoarrow/schema";
 
-type NullBitmap = Uint8Array | null | undefined;
+const PRIMITIVE_DATA_TYPES: string[] = [
+  ArrowStaticType.Bool,
+  ArrowStaticType.Int8,
+  ArrowStaticType.Uint8,
+  ArrowStaticType.Int16,
+  ArrowStaticType.Uint16,
+  ArrowStaticType.Int32,
+  ArrowStaticType.Uint32,
+  ArrowStaticType.Int64,
+  ArrowStaticType.Uint64,
+  ArrowStaticType.Float16,
+  ArrowStaticType.Float32,
+  ArrowStaticType.Float64,
+  ArrowStaticType.DateDay,
+  ArrowStaticType.DateMillisecond,
+  ArrowStaticType.TimeSecond,
+  ArrowStaticType.TimeMillisecond,
+  ArrowStaticType.TimeMicrosecond,
+  ArrowStaticType.TimeNanosecond,
+  ArrowStaticType.DurationSecond,
+  ArrowStaticType.DurationMillisecond,
+  ArrowStaticType.DurationMicrosecond,
+  ArrowStaticType.DurationNanosecond,
+  ArrowStaticType.IntervalYearMonth,
+  ArrowStaticType.IntervalDayTime,
+  ArrowStaticType.IntervalMonthDayNanosecond,
+];
+const VARIABLE_BINARY_STRING_DATA_TYPES: string[] = [
+  ArrowStaticType.Binary,
+  ArrowStaticType.LargeBinary,
+  ArrowStaticType.String,
+  ArrowStaticType.LargeString,
+];
 
 /**
  * Parse an [`ArrowArray`](https://arrow.apache.org/docs/format/CDataInterface.html#the-arrowarray-structure) C FFI struct into an `ArrowArray` instance.
  *
  * - `buffer` (`ArrayBuffer`): The [`WebAssembly.Memory`](https://developer.mozilla.org/en-US/docs/WebAssembly/JavaScript_interface/Memory) instance to read from.
  * - `ptr` (`number`): The numeric pointer in `buffer` where the C struct is located.
- * - `dataType` (`arrow.DataType`): The type of the vector to parse. This is retrieved from `field.type` on the result of `parseField`.
+ * - `schema` (`ArrowSchema`): The type of the vector to parse. This is the result of `parseArrowSchema`.
  * - `copy` (`boolean`): If `true`, will _copy_ data across the Wasm boundary, allowing you to delete the copy on the Wasm side. If `false`, the resulting `arrow.Vector` objects will be _views_ on Wasm memory. This requires careful usage as the arrays will become invalid if the memory region in Wasm changes.
  *
  */
-export function parseArrowArray<T extends DataType>(
+export function parseArrowArray(
   buffer: ArrayBuffer,
   ptr: number,
   schema: ArrowSchema,
@@ -46,468 +76,201 @@ export function parseArrowArray<T extends DataType>(
     );
   }
 
+  const buffers = parseBuffers(buffer, bufferPtrs, length, schema.format, copy);
 
   return {
     length,
     nullCount,
     offset,
-  }
-
-  if (DataType.isNull(dataType)) {
-    return arrow.makeData({
-      type: dataType,
-      offset,
-      length,
-    });
-  }
-
-  if (DataType.isInt(dataType)) {
-    const [validityPtr, dataPtr] = bufferPtrs;
-    const nullBitmap = parseNullBitmap(dataView.buffer, validityPtr, copy);
-    const byteLength = (length * dataType.bitWidth) / 8;
-    const data = copy
-      ? new dataType.ArrayType(copyBuffer(dataView.buffer, dataPtr, byteLength))
-      : new dataType.ArrayType(dataView.buffer, dataPtr, length);
-    return arrow.makeData({
-      type: dataType,
-      offset,
-      length,
-      nullCount,
-      data,
-      nullBitmap,
-    });
-  }
-
-  if (DataType.isFloat(dataType)) {
-    const [validityPtr, dataPtr] = bufferPtrs;
-    const nullBitmap = parseNullBitmap(dataView.buffer, validityPtr, copy);
-    // bitwidth doesn't exist on float types I guess
-    const byteLength = length * dataType.ArrayType.BYTES_PER_ELEMENT;
-    const data = copy
-      ? new dataType.ArrayType(copyBuffer(dataView.buffer, dataPtr, byteLength))
-      : new dataType.ArrayType(dataView.buffer, dataPtr, length);
-    return arrow.makeData({
-      type: dataType,
-      offset,
-      length,
-      nullCount,
-      data,
-      nullBitmap,
-    });
-  }
-
-  if (DataType.isBool(dataType)) {
-    const [validityPtr, dataPtr] = bufferPtrs;
-    const nullBitmap = parseNullBitmap(dataView.buffer, validityPtr, copy);
-
-    // Boolean arrays are bit-packed. This means the byte length should be the number of elements,
-    // rounded up to the nearest byte to account for the remainder.
-    const byteLength = Math.ceil(length / 8);
-
-    const data = copy
-      ? new dataType.ArrayType(copyBuffer(dataView.buffer, dataPtr, byteLength))
-      : new dataType.ArrayType(dataView.buffer, dataPtr, length);
-    return arrow.makeData({
-      type: dataType,
-      offset,
-      length,
-      nullCount,
-      data,
-      nullBitmap,
-    });
-  }
-
-  if (DataType.isDecimal(dataType)) {
-    const [validityPtr, dataPtr] = bufferPtrs;
-    const nullBitmap = parseNullBitmap(dataView.buffer, validityPtr, copy);
-    const byteLength = (length * dataType.bitWidth) / 8;
-    const data = copy
-      ? new dataType.ArrayType(copyBuffer(dataView.buffer, dataPtr, byteLength))
-      : new dataType.ArrayType(dataView.buffer, dataPtr, length);
-    return arrow.makeData({
-      type: dataType,
-      offset,
-      length,
-      nullCount,
-      data,
-      nullBitmap,
-    });
-  }
-
-  if (DataType.isDate(dataType)) {
-    const [validityPtr, dataPtr] = bufferPtrs;
-    const nullBitmap = parseNullBitmap(dataView.buffer, validityPtr, copy);
-
-    let byteWidth = getDateByteWidth(dataType);
-    const data = copy
-      ? new dataType.ArrayType(
-          copyBuffer(dataView.buffer, dataPtr, length * byteWidth)
-        )
-      : new dataType.ArrayType(dataView.buffer, dataPtr, length);
-    return arrow.makeData({
-      type: dataType,
-      offset,
-      length,
-      nullCount,
-      data,
-      nullBitmap,
-    });
-  }
-
-  if (DataType.isTime(dataType)) {
-    const [validityPtr, dataPtr] = bufferPtrs;
-    const nullBitmap = parseNullBitmap(dataView.buffer, validityPtr, copy);
-    const byteLength = (length * dataType.bitWidth) / 8;
-    const data = copy
-      ? new dataType.ArrayType(copyBuffer(dataView.buffer, dataPtr, byteLength))
-      : new dataType.ArrayType(dataView.buffer, dataPtr, length);
-    return arrow.makeData({
-      type: dataType,
-      offset,
-      length,
-      nullCount,
-      data,
-      nullBitmap,
-    });
-  }
-
-  if (DataType.isTimestamp(dataType)) {
-    const [validityPtr, dataPtr] = bufferPtrs;
-    const nullBitmap = parseNullBitmap(dataView.buffer, validityPtr, copy);
-
-    let byteWidth = getTimeByteWidth(dataType);
-    const data = copy
-      ? new dataType.ArrayType(
-          copyBuffer(dataView.buffer, dataPtr, length * byteWidth)
-        )
-      : new dataType.ArrayType(dataView.buffer, dataPtr, length);
-    return arrow.makeData({
-      type: dataType,
-      offset,
-      length,
-      nullCount,
-      data,
-      nullBitmap,
-    });
-  }
-
-  if (DataType.isInterval(dataType)) {
-    const [validityPtr, dataPtr] = bufferPtrs;
-    const nullBitmap = parseNullBitmap(dataView.buffer, validityPtr, copy);
-
-    // What's the bitwidth here?
-    if (copy) {
-      throw new Error("Not yet implemented");
-    }
-    const data = copy
-      ? new dataType.ArrayType(copyBuffer(dataView.buffer, dataPtr, length))
-      : new dataType.ArrayType(dataView.buffer, dataPtr, length);
-    return arrow.makeData({
-      type: dataType,
-      offset,
-      length,
-      nullCount,
-      data,
-      nullBitmap,
-    });
-  }
-
-  if (DataType.isBinary(dataType)) {
-    const [validityPtr, offsetsPtr, dataPtr] = bufferPtrs;
-    const nullBitmap = parseNullBitmap(dataView.buffer, validityPtr, copy);
-
-    const valueOffsets = copy
-      ? new Int32Array(
-          copyBuffer(
-            dataView.buffer,
-            offsetsPtr,
-            (length + 1) * Int32Array.BYTES_PER_ELEMENT
-          )
-        )
-      : new Int32Array(dataView.buffer, offsetsPtr, length + 1);
-
-    // The length described in pointer is the number of elements. The last element in `valueOffsets`
-    // stores the maximum offset in the buffer and thus the byte length
-    const byteLength = valueOffsets[valueOffsets.length - 1];
-
-    const data = copy
-      ? new dataType.ArrayType(copyBuffer(dataView.buffer, dataPtr, byteLength))
-      : new dataType.ArrayType(dataView.buffer, dataPtr, byteLength);
-    return arrow.makeData({
-      type: dataType,
-      offset,
-      length,
-      nullCount,
-      nullBitmap,
-      valueOffsets,
-      data,
-    });
-  }
-
-  if (isLargeBinary(dataType)) {
-    const [validityPtr, offsetsPtr, dataPtr] = bufferPtrs;
-    const nullBitmap = parseNullBitmap(dataView.buffer, validityPtr, copy);
-
-    // The original value offsets are an Int64Array, which Arrow JS does not yet support natively
-    const originalValueOffsets = new BigInt64Array(
-      dataView.buffer,
-      offsetsPtr,
-      length + 1
-    );
-
-    // Copy the Int64Array to an Int32Array
-    const valueOffsets = new Int32Array(length + 1);
-    for (let i = 0; i < originalValueOffsets.length; i++) {
-      valueOffsets[i] = Number(originalValueOffsets[i]);
-    }
-
-    // The length described in pointer is the number of elements. The last element in `valueOffsets`
-    // stores the maximum offset in the buffer and thus the byte length
-    const byteLength = valueOffsets[valueOffsets.length - 1];
-
-    const data = copy
-      ? new Uint8Array(copyBuffer(dataView.buffer, dataPtr, byteLength))
-      : new Uint8Array(dataView.buffer, dataPtr, byteLength);
-
-    // @ts-expect-error The return type is inferred wrong because we're coercing from a LargeBinary
-    // to a Binary
-    return arrow.makeData({
-      type: new arrow.Binary(),
-      offset,
-      length,
-      nullCount,
-      nullBitmap,
-      valueOffsets,
-      data,
-    });
-  }
-
-  if (DataType.isUtf8(dataType)) {
-    const [validityPtr, offsetsPtr, dataPtr] = bufferPtrs;
-    const nullBitmap = parseNullBitmap(dataView.buffer, validityPtr, copy);
-
-    const valueOffsets = copy
-      ? new Int32Array(
-          copyBuffer(
-            dataView.buffer,
-            offsetsPtr,
-            (length + 1) * Int32Array.BYTES_PER_ELEMENT
-          )
-        )
-      : new Int32Array(dataView.buffer, offsetsPtr, length + 1);
-
-    // The length described in pointer is the number of elements. The last element in `valueOffsets`
-    // stores the maximum offset in the buffer and thus the byte length
-    const byteLength = valueOffsets[valueOffsets.length - 1];
-
-    const data = copy
-      ? new dataType.ArrayType(copyBuffer(dataView.buffer, dataPtr, byteLength))
-      : new dataType.ArrayType(dataView.buffer, dataPtr, byteLength);
-    return arrow.makeData({
-      type: dataType,
-      offset,
-      length,
-      nullCount,
-      nullBitmap,
-      valueOffsets,
-      data,
-    });
-  }
-
-  if (isLargeUtf8(dataType)) {
-    const [validityPtr, offsetsPtr, dataPtr] = bufferPtrs;
-    const nullBitmap = parseNullBitmap(dataView.buffer, validityPtr, copy);
-
-    // The original value offsets are an Int64Array, which Arrow JS does not yet support natively
-    const originalValueOffsets = new BigInt64Array(
-      dataView.buffer,
-      offsetsPtr,
-      length + 1
-    );
-
-    // Copy the Int64Array to an Int32Array
-    const valueOffsets = new Int32Array(length + 1);
-    for (let i = 0; i < originalValueOffsets.length; i++) {
-      valueOffsets[i] = Number(originalValueOffsets[i]);
-    }
-
-    // The length described in pointer is the number of elements. The last element in `valueOffsets`
-    // stores the maximum offset in the buffer and thus the byte length
-    const byteLength = valueOffsets[valueOffsets.length - 1];
-
-    const data = copy
-      ? new Uint8Array(copyBuffer(dataView.buffer, dataPtr, byteLength))
-      : new Uint8Array(dataView.buffer, dataPtr, byteLength);
-
-    // @ts-expect-error The return type is inferred wrong because we're coercing from a LargeUtf8 to
-    // a Utf8
-    return arrow.makeData({
-      type: new arrow.Utf8(),
-      offset,
-      length,
-      nullCount,
-      nullBitmap,
-      valueOffsets,
-      data,
-    });
-  }
-
-  if (DataType.isFixedSizeBinary(dataType)) {
-    const [validityPtr, dataPtr] = bufferPtrs;
-    const nullBitmap = parseNullBitmap(dataView.buffer, validityPtr, copy);
-    const data = copy
-      ? new dataType.ArrayType(
-          copyBuffer(dataView.buffer, dataPtr, length * dataType.byteWidth)
-        )
-      : new dataType.ArrayType(
-          dataView.buffer,
-          dataPtr,
-          length * dataType.byteWidth
-        );
-    return arrow.makeData({
-      type: dataType,
-      offset,
-      length,
-      nullCount,
-      nullBitmap,
-      data,
-    });
-  }
-
-  if (DataType.isList(dataType)) {
-    assert(nChildren === 1);
-    const [validityPtr, offsetsPtr] = bufferPtrs;
-    const nullBitmap = parseNullBitmap(dataView.buffer, validityPtr, copy);
-    const valueOffsets = copy
-      ? new Int32Array(
-          copyBuffer(
-            dataView.buffer,
-            offsetsPtr,
-            (length + 1) * Int32Array.BYTES_PER_ELEMENT
-          )
-        )
-      : new Int32Array(dataView.buffer, offsetsPtr, length + 1);
-
-    assert(children[0].data.length === 1);
-    let childData = children[0].data[0];
-
-    return arrow.makeData({
-      type: dataType,
-      offset,
-      length,
-      nullCount,
-      nullBitmap,
-      valueOffsets,
-      child: childData,
-    });
-  }
-
-  if (isLargeList(dataType)) {
-    dataType;
-    assert(nChildren === 1);
-    const [validityPtr, offsetsPtr] = bufferPtrs;
-    const nullBitmap = parseNullBitmap(dataView.buffer, validityPtr, copy);
-
-    // The original value offsets are an Int64Array, which Arrow JS does not yet support natively
-    const originalValueOffsets = new BigInt64Array(
-      dataView.buffer,
-      offsetsPtr,
-      length + 1
-    );
-
-    // Copy the Int64Array to an Int32Array
-    const valueOffsets = new Int32Array(length + 1);
-    for (let i = 0; i < originalValueOffsets.length; i++) {
-      valueOffsets[i] = Number(originalValueOffsets[i]);
-    }
-
-    assert(children[0].data.length === 1);
-    let childData = children[0].data[0];
-
-    // @ts-expect-error The return type is inferred wrong because we're coercing from a LargeList to
-    // a List
-    return arrow.makeData({
-      type: new arrow.List((dataType as LargeList).children[0]),
-      offset,
-      length,
-      nullCount,
-      nullBitmap,
-      valueOffsets,
-      child: childData,
-    });
-  }
-
-  if (DataType.isFixedSizeList(dataType)) {
-    assert(nChildren === 1);
-    const [validityPtr] = bufferPtrs;
-    const nullBitmap = parseNullBitmap(dataView.buffer, validityPtr, copy);
-
-    assert(children[0].data.length === 1);
-    let childData = children[0].data[0];
-
-    return arrow.makeData({
-      type: dataType,
-      offset,
-      length,
-      nullCount,
-      nullBitmap,
-      child: childData,
-    });
-  }
-
-  if (DataType.isStruct(dataType)) {
-    const [validityPtr] = bufferPtrs;
-    const nullBitmap = parseNullBitmap(dataView.buffer, validityPtr, copy);
-
-    let childData = children.map((child) => {
-      assert(child.data.length === 1);
-      return child.data[0];
-    });
-
-    return arrow.makeData({
-      type: dataType,
-      offset,
-      length,
-      nullCount,
-      nullBitmap,
-      children: childData,
-    });
-  }
-
-  // TODO: sparse union, dense union, dictionary
-  throw new Error(`Unsupported type ${dataType}`);
+    buffers,
+    children,
+    dictionary: null,
+  };
 }
 
-function getDateByteWidth(type: arrow.Date_): number {
-  switch (type.unit) {
-    case arrow.DateUnit.DAY:
-      return 4;
-    case arrow.DateUnit.MILLISECOND:
-      return 8;
-  }
-  assertUnreachable();
-}
-
-function getTimeByteWidth(type: arrow.Time | arrow.Timestamp): number {
-  switch (type.unit) {
-    case arrow.TimeUnit.SECOND:
-    case arrow.TimeUnit.MILLISECOND:
-      return 4;
-    case arrow.TimeUnit.MICROSECOND:
-    case arrow.TimeUnit.NANOSECOND:
-      return 8;
-  }
-  assertUnreachable();
-}
-
-function parseNullBitmap(
+function parseBuffers(
   buffer: ArrayBuffer,
-  validityPtr: number,
+  bufferPtrs: Uint32Array,
+  length: number,
+  format: string,
   copy: boolean
-): NullBitmap {
-  // TODO: parse validity bitmaps
-  const nullBitmap = validityPtr === 0 ? null : null;
-  return nullBitmap;
+): (Uint8Array | null)[] {
+  if (isNullDataType(format)) {
+    return [];
+  }
+
+  // Special case this from the primitive data types because its data values are bit packed
+  if (isBoolDataType(format)) {
+    const [validityPtr, dataPtr] = bufferPtrs;
+    const validity = getBitPackedArray(buffer, validityPtr, length, copy);
+    const data = getBitPackedArray(buffer, dataPtr, length, copy);
+    return [validity, data];
+  }
+
+  if (isPrimitiveDataType(format)) {
+    const [validityPtr, dataPtr] = bufferPtrs;
+    const validity = getBitPackedArray(buffer, validityPtr, length, copy);
+    const data = getDataArray(buffer, dataPtr, length, format, copy);
+    return [validity, data];
+  }
+
+  // This includes string
+  if (isVariableBinaryDataType(format)) {
+    const [validityPtr, offsetsPtr, dataPtr] = bufferPtrs;
+    const validity = getBitPackedArray(buffer, validityPtr, length, copy);
+    const offsets = getOffsetsArray(buffer, offsetsPtr, length, format, copy);
+    const data = getDataArray(buffer, dataPtr, length, format, copy);
+    return [validity, offsets, data];
+  }
+
+  if (isListDataType(format)) {
+    const [validityPtr, offsetsPtr] = bufferPtrs;
+    const validity = getBitPackedArray(buffer, validityPtr, length, copy);
+    const offsets = getOffsetsArray(buffer, offsetsPtr, length, format, copy);
+    return [validity, offsets];
+  }
+
+  if (isFixedSizeListDataType(format) || isStructDataType(format)) {
+    const [validityPtr] = bufferPtrs;
+    const validity = getBitPackedArray(buffer, validityPtr, length, copy);
+    return [validity];
+  }
+
+  // TODO: unions
+
+  // TODO:
+  throw new Error("unimplemented");
+}
+
+function isNullDataType(format: string): boolean {
+  return format === ArrowStaticType.Null;
+}
+
+function isBoolDataType(format: string): boolean {
+  return format === ArrowStaticType.Bool;
+}
+
+function isPrimitiveDataType(format: string): boolean {
+  // TODO: include decimals, timestamps with timezone
+  return PRIMITIVE_DATA_TYPES.includes(format);
+}
+
+function isVariableBinaryDataType(format: string): boolean {
+  return VARIABLE_BINARY_STRING_DATA_TYPES.includes(format);
+}
+
+function isListDataType(format: string): boolean {
+  return (
+    format === ArrowStaticType.List || format === ArrowStaticType.LargeList
+  );
+}
+
+function isFixedSizeListDataType(format: string): boolean {
+  return format.startsWith("+w:");
+}
+
+function isStructDataType(format: string): boolean {
+  return format === ArrowStaticType.Struct;
+}
+
+function getBitPackedArray(
+  buffer: ArrayBuffer,
+  ptr: number,
+  length: number,
+  copy: boolean
+): Uint8Array | null {
+  const validityByteLength = Math.ceil(length / 8);
+  if (ptr === 0 || validityByteLength === 0) {
+    return null;
+  }
+
+  return copy
+    ? new Uint8Array(copyBuffer(buffer, ptr, validityByteLength))
+    : new Uint8Array(buffer, ptr, validityByteLength);
+}
+
+function getDataArray(
+  buffer: ArrayBuffer,
+  ptr: number,
+  length: number,
+  format: string,
+  copy: boolean
+): Uint8Array | null {
+  const byteLength = length * getByteWidth(format);
+  if (byteLength === 0) {
+    return null;
+  }
+
+  return copy
+    ? new Uint8Array(copyBuffer(buffer, ptr, byteLength))
+    : new Uint8Array(buffer, ptr, byteLength);
+}
+
+function getOffsetsArray(
+  buffer: ArrayBuffer,
+  ptr: number,
+  length: number,
+  format: string,
+  copy: boolean
+): Uint8Array | null {
+  const byteLength = length * getOffsetsByteWidth(format);
+  if (byteLength === 0) {
+    return null;
+  }
+
+  return copy
+    ? new Uint8Array(copyBuffer(buffer, ptr, byteLength))
+    : new Uint8Array(buffer, ptr, byteLength);
+}
+
+function getByteWidth(format: string): number {
+  // TODO: duration, interval, decimal
+  switch (format) {
+    case ArrowStaticType.Int8:
+    case ArrowStaticType.Uint8:
+      return 1;
+
+    case ArrowStaticType.Int16:
+    case ArrowStaticType.Uint16:
+    case ArrowStaticType.Float16:
+      return 2;
+
+    case ArrowStaticType.Int32:
+    case ArrowStaticType.Uint32:
+    case ArrowStaticType.Float32:
+    case ArrowStaticType.DateDay:
+    case ArrowStaticType.TimeSecond:
+    case ArrowStaticType.TimeMillisecond:
+      return 4;
+
+    case ArrowStaticType.Int64:
+    case ArrowStaticType.Uint64:
+    case ArrowStaticType.Float64:
+    case ArrowStaticType.DateMillisecond:
+    case ArrowStaticType.TimeMicrosecond:
+    case ArrowStaticType.TimeNanosecond:
+      return 8;
+
+    default:
+      break;
+  }
+
+  assertUnreachable();
+}
+
+function getOffsetsByteWidth(format: string): number {
+  switch (format) {
+    case ArrowStaticType.List:
+    case ArrowStaticType.Binary:
+    case ArrowStaticType.String:
+      return 4;
+    case ArrowStaticType.LargeList:
+    case ArrowStaticType.LargeBinary:
+    case ArrowStaticType.LargeString:
+      return 8;
+  }
+
+  assertUnreachable();
 }
 
 /** Copy existing buffer into new buffer */
@@ -528,5 +291,5 @@ export function assert(a: boolean): void {
 }
 
 function assertUnreachable(): never {
-  throw new Error();
+  throw new Error("unreachable");
 }
