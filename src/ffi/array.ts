@@ -1,33 +1,25 @@
 import * as arrow from "apache-arrow";
 import { DataType } from "apache-arrow";
-import { LargeList, isLargeBinary, isLargeList, isLargeUtf8 } from "./types";
+import { ArrowArray, ArrowSchema } from "../nanoarrow";
+// import { LargeList, isLargeBinary, isLargeList, isLargeUtf8 } from "./types";
 
 type NullBitmap = Uint8Array | null | undefined;
 
 /**
-Parse an [`ArrowArray`](https://arrow.apache.org/docs/format/CDataInterface.html#the-arrowarray-structure) C FFI struct into an [`arrow.Vector`](https://arrow.apache.org/docs/js/classes/Arrow_dom.Vector.html) instance. Multiple `Vector` instances can be joined to make an [`arrow.Table`](https://arrow.apache.org/docs/js/classes/Arrow_dom.Table.html).
-
-- `buffer` (`ArrayBuffer`): The [`WebAssembly.Memory`](https://developer.mozilla.org/en-US/docs/WebAssembly/JavaScript_interface/Memory) instance to read from.
-- `ptr` (`number`): The numeric pointer in `buffer` where the C struct is located.
-- `dataType` (`arrow.DataType`): The type of the vector to parse. This is retrieved from `field.type` on the result of `parseField`.
-- `copy` (`boolean`): If `true`, will _copy_ data across the Wasm boundary, allowing you to delete the copy on the Wasm side. If `false`, the resulting `arrow.Vector` objects will be _views_ on Wasm memory. This requires careful usage as the arrays will become invalid if the memory region in Wasm changes.
+ * Parse an [`ArrowArray`](https://arrow.apache.org/docs/format/CDataInterface.html#the-arrowarray-structure) C FFI struct into an `ArrowArray` instance.
+ *
+ * - `buffer` (`ArrayBuffer`): The [`WebAssembly.Memory`](https://developer.mozilla.org/en-US/docs/WebAssembly/JavaScript_interface/Memory) instance to read from.
+ * - `ptr` (`number`): The numeric pointer in `buffer` where the C struct is located.
+ * - `dataType` (`arrow.DataType`): The type of the vector to parse. This is retrieved from `field.type` on the result of `parseField`.
+ * - `copy` (`boolean`): If `true`, will _copy_ data across the Wasm boundary, allowing you to delete the copy on the Wasm side. If `false`, the resulting `arrow.Vector` objects will be _views_ on Wasm memory. This requires careful usage as the arrays will become invalid if the memory region in Wasm changes.
+ *
  */
-export function parseVector<T extends DataType>(
+export function parseArrowArray<T extends DataType>(
   buffer: ArrayBuffer,
   ptr: number,
-  dataType: T,
+  schema: ArrowSchema,
   copy: boolean = false
-): arrow.Vector<T> {
-  const data = parseData(buffer, ptr, dataType, copy);
-  return arrow.makeVector(data);
-}
-
-export function parseData<T extends DataType>(
-  buffer: ArrayBuffer,
-  ptr: number,
-  dataType: T,
-  copy: boolean = false
-): arrow.Data<T> {
+): ArrowArray {
   const dataView = new DataView(buffer);
 
   const length = Number(dataView.getBigInt64(ptr, true));
@@ -44,14 +36,21 @@ export function parseData<T extends DataType>(
   }
 
   const ptrToChildrenPtrs = dataView.getUint32(ptr + 44, true);
-  const children: arrow.Vector[] = new Array(Number(nChildren));
+  const children: ArrowArray[] = new Array(Number(nChildren));
   for (let i = 0; i < nChildren; i++) {
-    children[i] = parseVector(
+    children[i] = parseArrowArray(
       buffer,
       dataView.getUint32(ptrToChildrenPtrs + i * 4, true),
-      dataType.children[i].type,
+      schema.children[i],
       copy
     );
+  }
+
+
+  return {
+    length,
+    nullCount,
+    offset,
   }
 
   if (DataType.isNull(dataType)) {
