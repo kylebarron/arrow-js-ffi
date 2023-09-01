@@ -26,6 +26,17 @@ impl FFIArrowArray {
 
 #[wasm_bindgen]
 impl FFIArrowArray {
+    /// Create a new FFIArrowArray from a raw C pointer
+    ///
+    /// # Safety
+    ///
+    /// This is very unsafe! The ArrowArray must have been constructed as per the Arrow C Data
+    /// Interface
+    #[wasm_bindgen(js_name = newUnsafe)]
+    pub fn new_unsafe(ptr: *mut ffi::ArrowArray) -> Self {
+        Self(unsafe { Box::from_raw(ptr) })
+    }
+
     #[wasm_bindgen]
     pub fn addr(&self) -> *const ffi::ArrowArray {
         self.0.as_ref() as *const _
@@ -63,6 +74,17 @@ impl TryFrom<&FFIArrowField> for arrow2::datatypes::Field {
 
 #[wasm_bindgen]
 impl FFIArrowField {
+    /// Create a new FFIArrowArray from a raw C pointer
+    ///
+    /// # Safety
+    ///
+    /// This is very unsafe! The ArrowArray must have been constructed as per the Arrow C Data
+    /// Interface
+    #[wasm_bindgen(js_name = newUnsafe)]
+    pub fn new_unsafe(ptr: *mut ffi::ArrowSchema) -> Self {
+        Self(unsafe { Box::from_raw(ptr) })
+    }
+
     #[wasm_bindgen]
     pub fn addr(&self) -> *const ffi::ArrowSchema {
         self.0.as_ref() as *const _
@@ -72,13 +94,13 @@ impl FFIArrowField {
 /// Wrapper an Arrow RecordBatch stored as FFI in Wasm memory.
 #[wasm_bindgen]
 pub struct FFIArrowRecordBatch {
-    field: Box<ffi::ArrowSchema>,
     array: Box<ffi::ArrowArray>,
+    field: Box<ffi::ArrowSchema>,
 }
 
 impl FFIArrowRecordBatch {
-    pub fn new(field: Box<ffi::ArrowSchema>, array: Box<ffi::ArrowArray>) -> Self {
-        Self { field, array }
+    pub fn new(array: Box<ffi::ArrowArray>, field: Box<ffi::ArrowSchema>) -> Self {
+        Self { array, field }
     }
 
     pub fn from_chunk(chunk: Chunk<Box<dyn Array>>, schema: Schema) -> Self {
@@ -91,10 +113,54 @@ impl FFIArrowRecordBatch {
             array: Box::new(ffi::export_array_to_c(struct_array.boxed())),
         }
     }
+
+    pub fn try_into_chunk(self) -> Result<(Chunk<Box<dyn Array>>, Schema)> {
+        let imported_field = unsafe { ffi::import_field_from_c(&self.field) }?;
+        let imported_array =
+            unsafe { ffi::import_array_from_c(*self.array, imported_field.data_type().clone()) }?;
+
+        match imported_field.data_type().to_logical_type() {
+            DataType::Struct(struct_fields) => {
+                let struct_array = imported_array
+                    .as_any()
+                    .downcast_ref::<StructArray>()
+                    .unwrap();
+                let chunk = Chunk::new(struct_array.values().to_vec());
+                // TODO: support metadata
+                // I think this might come across as an extension data type? Not sure
+                let schema = Schema {
+                    fields: struct_fields.to_vec(),
+                    metadata: Default::default(),
+                };
+                Ok((chunk, schema))
+            }
+            dtype => Err(ArrowFFIError::InternalError(format!(
+                "Expected struct type, got {:?}",
+                dtype
+            ))),
+        }
+    }
 }
 
 #[wasm_bindgen]
 impl FFIArrowRecordBatch {
+    /// Create a new FFIArrowArray from a raw C pointer
+    ///
+    /// # Safety
+    ///
+    /// This is very unsafe! The ArrowArray must have been constructed as per the Arrow C Data
+    /// Interface
+    #[wasm_bindgen(js_name = newUnsafe)]
+    pub unsafe fn new_unsafe(
+        array_ptr: *mut ffi::ArrowArray,
+        schema_ptr: *mut ffi::ArrowSchema,
+    ) -> Self {
+        Self {
+            array: Box::from_raw(array_ptr),
+            field: Box::from_raw(schema_ptr),
+        }
+    }
+
     #[wasm_bindgen]
     pub fn array_addr(&self) -> *const ffi::ArrowArray {
         self.array.as_ref() as *const _
@@ -106,7 +172,7 @@ impl FFIArrowRecordBatch {
     }
 }
 
-/// Wrapper to represent an Arrow Chunk in Wasm memory, e.g. a  collection of FFI ArrowArray
+/// Wrapper to represent an Arrow Chunk in Wasm memory, e.g. a collection of FFI ArrowArray
 /// structs
 #[wasm_bindgen]
 pub struct FFIArrowChunk(Vec<FFIArrowArray>);
