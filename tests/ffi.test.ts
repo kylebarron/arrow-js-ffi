@@ -8,8 +8,7 @@ import { Type } from "../src/types";
 
 wasm.setPanicHook();
 
-// @ts-expect-error
-const WASM_MEMORY: WebAssembly.Memory = wasm.__wasm.memory;
+const WASM_MEMORY: WebAssembly.Memory = wasm._memory();
 
 const TEST_TABLE = loadIPCTableFromDisk("tests/table.arrow");
 const FFI_TABLE = arrowTableToFFI(TEST_TABLE);

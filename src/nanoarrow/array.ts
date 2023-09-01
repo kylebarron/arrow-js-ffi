@@ -16,22 +16,6 @@ export interface ArrowArray {
   offset: number;
 
   /**
-   * The number of physical buffers backing this array. The number of buffers is a function of the
-   * data type, as described in the [Columnar format
-   * specification](https://arrow.apache.org/docs/format/Columnar.html#format-columnar).
-   *
-   * Buffers of children arrays are not included.
-   */
-  // nBuffers: number;
-
-  /**
-   * The number of children this array has. The number of children is a function of the data type,
-   * as described in the [Columnar format
-   * specification](https://arrow.apache.org/docs/format/Columnar.html#format-columnar).
-   */
-  // nChildren: number;
-
-  /**
    * An array of buffers backing this array. There must be `n_buffers` objects.
    *
    * The producer MUST ensure that each contiguous buffer is large enough to represent length +
