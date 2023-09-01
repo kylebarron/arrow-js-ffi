@@ -1978,8 +1978,8 @@ __metadata:
 
 "rust-arrow-ffi@file:./tests/rust-arrow-ffi/pkg/::locator=arrow-js-ffi%40workspace%3A.":
   version: 0.1.0
-  resolution: "rust-arrow-ffi@file:./tests/rust-arrow-ffi/pkg/#./tests/rust-arrow-ffi/pkg/::hash=392a45&locator=arrow-js-ffi%40workspace%3A."
-  checksum: 0fb94a3eef8b7ea1051a45f9a54315f906592646031069dc2740d1f9e7f977f2122f8cd76c12fa24c741d22668fc0a859f6818330d58d89e4f6fde84a3e19abc
+  resolution: "rust-arrow-ffi@file:./tests/rust-arrow-ffi/pkg/#./tests/rust-arrow-ffi/pkg/::hash=5ca7ce&locator=arrow-js-ffi%40workspace%3A."
+  checksum: 7882af0f717cec41d3fc8cda5975f571dc3418a1cadd17923634c3db844779e105b88fa2e1b35a3c422af09d93ad37421ce57a14bbad851086ae75d628b90121
   languageName: node
   linkType: hard
 

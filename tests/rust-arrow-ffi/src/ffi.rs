@@ -1,4 +1,4 @@
-use crate::error::{ArrowFFIError, Result};
+use crate::error::{ArrowFFIError, Result, WasmResult};
 use arrow2::array::{Array, StructArray};
 use arrow2::chunk::Chunk;
 use arrow2::datatypes::{DataType, Field, Schema};
@@ -6,6 +6,12 @@ use arrow2::ffi;
 use wasm_bindgen::prelude::*;
 
 type ArrowTable = Vec<Chunk<Box<dyn Array>>>;
+
+macro_rules! log {
+    ( $( $t:tt )* ) => {
+        web_sys::console::log_1(&format!( $( $t )* ).into());
+    }
+}
 
 /// Wrapper around an ArrowArray FFI struct in Wasm memory.
 #[wasm_bindgen]
@@ -18,7 +24,7 @@ impl From<Box<dyn Array>> for FFIArrowArray {
 }
 
 impl FFIArrowArray {
-    fn import(self, data_type: DataType) -> Result<Box<dyn Array>> {
+    fn _import(self, data_type: DataType) -> Result<Box<dyn Array>> {
         let imported = unsafe { ffi::import_array_from_c(*self.0, data_type) };
         Ok(imported?)
     }
@@ -35,6 +41,15 @@ impl FFIArrowArray {
     #[wasm_bindgen(js_name = newUnsafe)]
     pub fn new_unsafe(ptr: *mut ffi::ArrowArray) -> Self {
         Self(unsafe { Box::from_raw(ptr) })
+    }
+
+    #[wasm_bindgen]
+    pub fn import(self, field: FFIArrowField) -> WasmResult<()> {
+        let field: Field = (&field).try_into()?;
+        let imported = self._import(field.data_type().clone())?;
+        log!("{:?}", imported);
+        // log!( ":?", imported);
+        Ok(())
     }
 
     #[wasm_bindgen]
@@ -190,7 +205,7 @@ impl FFIArrowChunk {
     pub fn import(self, data_types: &[&DataType]) -> Result<Chunk<Box<dyn Array>>> {
         let mut arrays: Vec<Box<dyn Array>> = vec![];
         for (i, ffi_array) in self.0.into_iter().enumerate() {
-            arrays.push(ffi_array.import(data_types[i].clone())?);
+            arrays.push(ffi_array._import(data_types[i].clone())?);
         }
 
         Ok(Chunk::new(arrays))
