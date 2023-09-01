@@ -5,9 +5,12 @@ use wasm_bindgen::prelude::*;
 /// Taken from
 /// https://radu-matei.com/blog/practical-guide-to-wasm-memory/#passing-arrays-to-rust-webassembly-modules
 #[wasm_bindgen]
-pub fn malloc(len: usize) -> *mut u8 {
+pub fn malloc(len: usize) -> *mut u64 {
+    // Note: we "fake" an array of u64, not u8, so that the Rust allocator will align on 8 bytes.
+    let u64_len = (len as f64 / 8.0).ceil() as usize;
+
     // create a new mutable buffer with capacity `len`
-    let mut buf = Vec::with_capacity(len);
+    let mut buf = Vec::with_capacity(u64_len);
 
     // take a mutable pointer to the buffer
     let ptr = buf.as_mut_ptr();
