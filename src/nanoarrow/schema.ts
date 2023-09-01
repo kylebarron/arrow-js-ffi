@@ -50,9 +50,9 @@ export interface ArrowSchema {
    * but in the `children` structures.
    */
   format: string;
-  name: ArrowString | null;
+  name: string;
   metadata: ArrowString | Map<string, string> | null;
-  flags: number | bigint;
+  flags: bigint;
   children: ArrowSchema[];
   dictionary: ArrowSchema | null;
 }

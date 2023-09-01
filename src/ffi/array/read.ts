@@ -1,5 +1,5 @@
-import { ArrowArray, ArrowSchema } from "../nanoarrow";
-import { ArrowStaticType } from "../nanoarrow/schema";
+import type { ArrowArray, ArrowSchema } from "../../nanoarrow";
+import { ArrowStaticType } from "../../nanoarrow/schema";
 
 const PRIMITIVE_DATA_TYPES: string[] = [
   ArrowStaticType.Bool,
@@ -36,15 +36,15 @@ const VARIABLE_BINARY_STRING_DATA_TYPES: string[] = [
 ];
 
 /**
- * Parse an [`ArrowArray`](https://arrow.apache.org/docs/format/CDataInterface.html#the-arrowarray-structure) C FFI struct into an `ArrowArray` instance.
+ * Read an [`ArrowArray`](https://arrow.apache.org/docs/format/CDataInterface.html#the-arrowarray-structure) C FFI struct into an `ArrowArray` instance.
  *
  * - `buffer` (`ArrayBuffer`): The [`WebAssembly.Memory`](https://developer.mozilla.org/en-US/docs/WebAssembly/JavaScript_interface/Memory) instance to read from.
  * - `ptr` (`number`): The numeric pointer in `buffer` where the C struct is located.
- * - `schema` (`ArrowSchema`): The type of the vector to parse. This is the result of `parseArrowSchema`.
+ * - `schema` (`ArrowSchema`): The type of the vector to read. This is the result of `readSchemaFFI`.
  * - `copy` (`boolean`): If `true`, will _copy_ data across the Wasm boundary, allowing you to delete the copy on the Wasm side. If `false`, the resulting `arrow.Vector` objects will be _views_ on Wasm memory. This requires careful usage as the arrays will become invalid if the memory region in Wasm changes.
  *
  */
-export function parseArrowArray(
+export function readArrayFFI(
   buffer: ArrayBuffer,
   ptr: number,
   schema: ArrowSchema,
@@ -68,7 +68,7 @@ export function parseArrowArray(
   const ptrToChildrenPtrs = dataView.getUint32(ptr + 44, true);
   const children: ArrowArray[] = new Array(Number(nChildren));
   for (let i = 0; i < nChildren; i++) {
-    children[i] = parseArrowArray(
+    children[i] = readArrayFFI(
       buffer,
       dataView.getUint32(ptrToChildrenPtrs + i * 4, true),
       schema.children[i],

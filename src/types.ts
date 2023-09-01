@@ -1,5 +1,7 @@
 import { DataType, Field } from "apache-arrow";
 
+export type Malloc = (length: number) => number;
+
 // Redefine the arrow Type enum to include LargeList, LargeBinary, and LargeUtf8
 export enum Type {
   NONE = 0 /** The default placeholder type */,

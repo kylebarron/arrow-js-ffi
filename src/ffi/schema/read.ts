@@ -1,4 +1,4 @@
-import { ArrowSchema } from "../nanoarrow/schema";
+import { ArrowSchema } from "../../nanoarrow/schema";
 
 const UTF8_DECODER = new TextDecoder("utf-8");
 
@@ -10,7 +10,7 @@ const UTF8_DECODER = new TextDecoder("utf-8");
  * - `buffer` (`ArrayBuffer`): The [`WebAssembly.Memory`](https://developer.mozilla.org/en-US/docs/WebAssembly/JavaScript_interface/Memory) instance to read from.
  * - `ptr` (`number`): The numeric pointer in `buffer` where the C struct is located.
  */
-export function parseArrowSchema(
+export function readSchemaFFI(
   buffer: ArrayBuffer,
   ptr: number
 ): ArrowSchema {
@@ -32,7 +32,7 @@ export function parseArrowSchema(
   const ptrToChildrenPtrs = dataView.getUint32(ptr + 32, true);
   const childrenFields: ArrowSchema[] = new Array(Number(nChildren));
   for (let i = 0; i < nChildren; i++) {
-    childrenFields[i] = parseArrowSchema(
+    childrenFields[i] = readSchemaFFI(
       buffer,
       dataView.getUint32(ptrToChildrenPtrs + i * 4, true)
     );
