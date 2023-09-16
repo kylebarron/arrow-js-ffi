@@ -2,17 +2,18 @@ import { readFileSync } from "fs";
 import { describe, it, expect } from "vitest";
 import * as arrow from "apache-arrow";
 import * as wasm from "rust-arrow-ffi";
+import * as arrowWasm from "arrow-wasm-arrow2";
 import { arrowTableToFFI, arraysEqual, loadIPCTableFromDisk } from "./utils";
 import { parseField, parseVector } from "../src";
 import { Type } from "../src/types";
 
-wasm.setPanicHook();
+arrowWasm.setPanicHook();
 
-// @ts-expect-error
-const WASM_MEMORY: WebAssembly.Memory = wasm.__wasm.memory;
+const WASM_MEMORY: WebAssembly.Memory = arrowWasm.wasmMemory()
 
 const TEST_TABLE = loadIPCTableFromDisk("tests/table.arrow");
-const FFI_TABLE = arrowTableToFFI(TEST_TABLE);
+const WASM_TABLE = arrowWasm.Table.fromIPCStream(arrow.tableToIPC(TEST_TABLE, "stream"))
+const FFI_TABLE = WASM_TABLE.toFFI();
 
 interface FixtureType {
   data: any;
@@ -240,12 +241,12 @@ describe("large_binary", (t) => {
 
     // Then read the large table
     const tableBuffer = readFileSync("tests/large_table.arrow");
-    let ffiTable = wasm.arrowIPCToFFI(tableBuffer);
+    let ffiTable = arrowWasm.Table.fromIPCStream(tableBuffer).intoFFI();
 
     // This is hard-coded based on the order in pyarrow_generate_data.py
     let columnIndex = 0;
 
-    const fieldPtr = ffiTable.schemaAddr(columnIndex);
+    const fieldPtr = ffiTable.schemaAddr();
     const field = parseField(WASM_MEMORY.buffer, fieldPtr);
 
     expect(field.name).toStrictEqual("large_binary");
