@@ -29,13 +29,13 @@
     "src/"
   ],
   "peerDependencies": {
-    "apache-arrow": "^10.0.0"
+    "apache-arrow": ">=13"
   },
   "devDependencies": {
     "@rollup/plugin-terser": "^0.4.3",
     "@rollup/plugin-typescript": "^11.1.2",
     "@types/tape": "^4.13.2",
-    "apache-arrow": "^12.0.1",
+    "apache-arrow": "^13",
     "rollup": "^3.26.2",
     "rollup-plugin-dts": "^5.3.0",
     "rust-arrow-ffi": "./tests/rust-arrow-ffi/pkg/",
