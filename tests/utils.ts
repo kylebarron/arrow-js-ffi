@@ -1,6 +1,6 @@
 import { readFileSync } from "fs";
 import * as arrow from "apache-arrow";
-import * as wasm from "rust-arrow-ffi";
+import * as arrowWasm from "arrow-wasm-arrow2";
 
 export function loadIPCTableFromDisk(path: string): arrow.Table {
   const buffer = readFileSync(path);
@@ -8,15 +8,27 @@ export function loadIPCTableFromDisk(path: string): arrow.Table {
 }
 
 /** Put an Arrow Table in Wasm memory and expose it via FFI */
-export function arrowTableToFFI(table: arrow.Table): wasm.FFIArrowTable {
-  return wasm.arrowIPCToFFI(arrow.tableToIPC(table, "file"));
+export function arrowTableToFFI(table: arrow.Table): arrowWasm.FFITable {
+  return arrowWasm.Table.fromIPCStream(
+    arrow.tableToIPC(table, "stream")
+  ).intoFFI();
 }
 
 /** Put an Arrow Table in Wasm memory and expose it via an FFI RecordBatch */
 export function arrowTableToFFIRecordBatch(
   table: arrow.Table
-): wasm.FFIArrowRecordBatch {
-  return wasm.arrowIPCToFFIRecordBatch(arrow.tableToIPC(table, "file"));
+): arrowWasm.FFIRecordBatch {
+  const wasmTable = arrowWasm.Table.fromIPCStream(
+    arrow.tableToIPC(table, "stream")
+  );
+  if (wasmTable.numBatches !== 1) {
+    throw new Error(`expected only one batch, got ${wasmTable.numBatches}`);
+  }
+  const wasmRecordBatch = wasmTable.recordBatch(0);
+  if (!wasmRecordBatch) {
+    throw new Error("wasm record batch is undefined");
+  }
+  return wasmRecordBatch.intoFFI();
 }
 
 export function arraysEqual<T>(

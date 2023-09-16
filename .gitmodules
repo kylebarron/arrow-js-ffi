@@ -1,0 +1,3 @@
+[submodule "tests/arrow-wasm"]
+	path = tests/arrow-wasm
+	url = https://github.com/kylebarron/arrow-wasm

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import * as wasm from "rust-arrow-ffi";
+import * as arrowWasm from "arrow-wasm-arrow2";
 import {
   arraysEqual,
   loadIPCTableFromDisk,
@@ -7,11 +7,11 @@ import {
 } from "./utils";
 import { parseRecordBatch } from "../src";
 import { readFileSync } from "fs";
+import assert from "assert";
 
-wasm.setPanicHook();
+arrowWasm.setPanicHook();
 
-// @ts-expect-error
-const WASM_MEMORY: WebAssembly.Memory = wasm.__wasm.memory;
+const WASM_MEMORY: WebAssembly.Memory = arrowWasm.wasmMemory();
 
 const TEST_TABLE = loadIPCTableFromDisk("tests/table.arrow");
 const FFI_RECORD_BATCH = arrowTableToFFIRecordBatch(TEST_TABLE);
@@ -20,8 +20,8 @@ describe("record batch", (t) => {
   function test(copy: boolean) {
     const newRecordBatch = parseRecordBatch(
       WASM_MEMORY.buffer,
-      FFI_RECORD_BATCH.array_addr(),
-      FFI_RECORD_BATCH.field_addr(),
+      FFI_RECORD_BATCH.arrayAddr(),
+      FFI_RECORD_BATCH.schemaAddr(),
       copy
     );
 
@@ -53,12 +53,16 @@ describe("record batch with large types", (t) => {
 
   function test(copy: boolean) {
     const tableBuffer = readFileSync("tests/large_table.arrow");
-    let ffiRecordBatch = wasm.arrowIPCToFFIRecordBatch(tableBuffer);
+    const wasmTable = arrowWasm.Table.fromIPCFile(tableBuffer);
+    assert(wasmTable.numBatches === 1, "Should have one batch");
+    const wasmRecordBatch = wasmTable.recordBatch(0);
+    assert(wasmRecordBatch, "wasm record batch should not be undefined");
+    let ffiRecordBatch = wasmRecordBatch.intoFFI();
 
     const newRecordBatch = parseRecordBatch(
       WASM_MEMORY.buffer,
-      ffiRecordBatch.array_addr(),
-      ffiRecordBatch.field_addr(),
+      ffiRecordBatch.arrayAddr(),
+      ffiRecordBatch.schemaAddr(),
       copy
     );
 

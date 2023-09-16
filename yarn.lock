@@ -464,6 +464,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/node@npm:^20.6.1":
+  version: 20.6.2
+  resolution: "@types/node@npm:20.6.2"
+  checksum: 96fe5303872640a173f3fd43e289a451776ed5b8f0090094447c6790b43f23fb607eea8268af0829cef4d132e5afa0bfa4cd871aa7412e9042a414a698e9e971
+  languageName: node
+  linkType: hard
+
 "@types/pad-left@npm:2.1.1":
   version: 2.1.1
   resolution: "@types/pad-left@npm:2.1.1"
@@ -715,8 +722,11 @@ __metadata:
   dependencies:
     "@rollup/plugin-terser": ^0.4.3
     "@rollup/plugin-typescript": ^11.1.2
+    "@types/node": ^20.6.1
     "@types/tape": ^4.13.2
     apache-arrow: ^13
+    arrow-wasm-arrow1: ./tests/arrow-wasm/pkg_arrow1/
+    arrow-wasm-arrow2: ./tests/arrow-wasm/pkg_arrow2/
     rollup: ^3.26.2
     rollup-plugin-dts: ^5.3.0
     rust-arrow-ffi: ./tests/rust-arrow-ffi/pkg/
@@ -727,6 +737,20 @@ __metadata:
     apache-arrow: ">=13"
   languageName: unknown
   linkType: soft
+
+"arrow-wasm-arrow1@file:./tests/arrow-wasm/pkg_arrow1/::locator=arrow-js-ffi%40workspace%3A.":
+  version: 0.1.0
+  resolution: "arrow-wasm-arrow1@file:./tests/arrow-wasm/pkg_arrow1/#./tests/arrow-wasm/pkg_arrow1/::hash=98dbb1&locator=arrow-js-ffi%40workspace%3A."
+  checksum: 012bbb0849532fb9aa42889c058850692c5ff9fd512aa9c50f6999f8ff341b2f0b826c6a70a47c799b9e3a39db8dddb2275455ec00dfc1657b678dba94ff8744
+  languageName: node
+  linkType: hard
+
+"arrow-wasm-arrow2@file:./tests/arrow-wasm/pkg_arrow2/::locator=arrow-js-ffi%40workspace%3A.":
+  version: 0.1.0
+  resolution: "arrow-wasm-arrow2@file:./tests/arrow-wasm/pkg_arrow2/#./tests/arrow-wasm/pkg_arrow2/::hash=94e2c0&locator=arrow-js-ffi%40workspace%3A."
+  checksum: ef606ea606fc68373f9d023d473b16c7612bb4af03a005dec2e27d6b0a6ed2dc22b9f993fce63b0e4a1120468dc8720b4582809520857aa6eeebb38e75a44252
+  languageName: node
+  linkType: hard
 
 "assertion-error@npm:^1.1.0":
   version: 1.1.0
