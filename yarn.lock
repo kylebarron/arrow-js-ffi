@@ -471,25 +471,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/tape@npm:^4.13.2":
-  version: 4.13.4
-  resolution: "@types/tape@npm:4.13.4"
-  dependencies:
-    "@types/node": "*"
-    "@types/through": "*"
-  checksum: d69eada4645076a18bd728aa2cab9400082b1ad2124089c6e0e2931bf98fdad16579e9051db1f922c28ae0cb5f9ad2e88fac4ba9c5ba18e8400cc7558f28803d
-  languageName: node
-  linkType: hard
-
-"@types/through@npm:*":
-  version: 0.0.30
-  resolution: "@types/through@npm:0.0.30"
-  dependencies:
-    "@types/node": "*"
-  checksum: 9578470db0b527c26e246a1220ae9bffc6bf47f20f89c54aac467c083ab1f7e16c00d9a7b4bb6cb4e2dfae465027270827e5908a6236063f6214625e50585d78
-  languageName: node
-  linkType: hard
-
 "@vitest/expect@npm:0.33.0":
   version: 0.33.0
   resolution: "@vitest/expect@npm:0.33.0"
@@ -715,7 +696,6 @@ __metadata:
   dependencies:
     "@rollup/plugin-terser": ^0.4.3
     "@rollup/plugin-typescript": ^11.1.2
-    "@types/tape": ^4.13.2
     apache-arrow: ^13
     rollup: ^3.26.2
     rollup-plugin-dts: ^5.3.0
