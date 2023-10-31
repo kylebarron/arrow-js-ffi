@@ -124,6 +124,15 @@ def nullable_int() -> pa.Array:
     return arr
 
 
+def map_array() -> pa.Array:
+    offsets = [0, 2, 3, 4]
+    keys = ["a", "b", "a", "b"]
+    items = [1, 2, 3, 4]
+    arr = pa.MapArray.from_arrays(offsets, keys, items)
+    assert isinstance(arr, pa.MapArray)
+    return arr
+
+
 class MyExtensionType(pa.ExtensionType):
     """
     Refer to https://arrow.apache.org/docs/python/extending_types.html for
@@ -170,6 +179,7 @@ def table() -> pa.Table:
             "date64": date64_array(),
             "timestamp": timestamp_array(),
             "nullable_int": nullable_int(),
+            "map": map_array(),
         }
     )
 
