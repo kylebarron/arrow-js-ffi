@@ -44,9 +44,9 @@ export function parseData<T extends DataType>(
   }
 
   const ptrToChildrenPtrs = dataView.getUint32(ptr + 44, true);
-  const children: arrow.Vector[] = new Array(Number(nChildren));
+  const children: arrow.Data[] = new Array(Number(nChildren));
   for (let i = 0; i < nChildren; i++) {
-    children[i] = parseVector(
+    children[i] = parseData(
       buffer,
       dataView.getUint32(ptrToChildrenPtrs + i * 4, true),
       dataType.children[i].type,
@@ -389,9 +389,6 @@ export function parseData<T extends DataType>(
         )
       : new Int32Array(dataView.buffer, offsetsPtr, length + 1);
 
-    assert(children[0].data.length === 1);
-    let childData = children[0].data[0];
-
     return arrow.makeData({
       type: dataType,
       offset,
@@ -399,7 +396,7 @@ export function parseData<T extends DataType>(
       nullCount,
       nullBitmap,
       valueOffsets,
-      child: childData,
+      child: children[0],
     });
   }
 
@@ -422,9 +419,6 @@ export function parseData<T extends DataType>(
       valueOffsets[i] = Number(originalValueOffsets[i]);
     }
 
-    assert(children[0].data.length === 1);
-    let childData = children[0].data[0];
-
     // @ts-expect-error The return type is inferred wrong because we're coercing from a LargeList to
     // a List
     return arrow.makeData({
@@ -434,7 +428,7 @@ export function parseData<T extends DataType>(
       nullCount,
       nullBitmap,
       valueOffsets,
-      child: childData,
+      child: children[0],
     });
   }
 
@@ -443,16 +437,13 @@ export function parseData<T extends DataType>(
     const [validityPtr] = bufferPtrs;
     const nullBitmap = parseNullBitmap(dataView.buffer, validityPtr, copy);
 
-    assert(children[0].data.length === 1);
-    let childData = children[0].data[0];
-
     return arrow.makeData({
       type: dataType,
       offset,
       length,
       nullCount,
       nullBitmap,
-      child: childData,
+      child: children[0],
     });
   }
 
@@ -460,18 +451,13 @@ export function parseData<T extends DataType>(
     const [validityPtr] = bufferPtrs;
     const nullBitmap = parseNullBitmap(dataView.buffer, validityPtr, copy);
 
-    let childData = children.map((child) => {
-      assert(child.data.length === 1);
-      return child.data[0];
-    });
-
     return arrow.makeData({
       type: dataType,
       offset,
       length,
       nullCount,
       nullBitmap,
-      children: childData,
+      children,
     });
   }
 
