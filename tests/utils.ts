@@ -12,6 +12,13 @@ export function arrowTableToFFI(table: arrow.Table): wasm.FFIArrowTable {
   return wasm.arrowIPCToFFI(arrow.tableToIPC(table, "file"));
 }
 
+/** Put an Arrow Table in Wasm memory and expose it via an FFI RecordBatch */
+export function arrowTableToFFIRecordBatch(
+  table: arrow.Table
+): wasm.FFIArrowRecordBatch {
+  return wasm.arrowIPCToFFIRecordBatch(arrow.tableToIPC(table, "file"));
+}
+
 export function arraysEqual<T>(
   arr1: ArrayLike<T>,
   arr2: ArrayLike<T>
