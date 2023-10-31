@@ -80,8 +80,10 @@ export function parseField(buffer: ArrayBuffer, ptr: number): arrow.Field {
 
   const field = parseFieldContent({
     formatString,
+    flags,
     name,
     childrenFields,
+    metadata,
   });
   if (dictionaryValuesField !== null) {
     const dictionaryType = new arrow.Dictionary(
@@ -103,12 +105,16 @@ export function parseField(buffer: ArrayBuffer, ptr: number): arrow.Field {
 
 function parseFieldContent({
   formatString,
+  flags,
   name,
   childrenFields,
+  metadata,
 }: {
   formatString: string;
+  flags: Flags;
   name: string;
   childrenFields: arrow.Field[];
+  metadata: Map<string, string> | null;
 }): arrow.Field {
   const primitiveType = formatMapping[formatString];
   if (primitiveType) {
