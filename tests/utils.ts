@@ -35,3 +35,32 @@ export function arraysEqual<T>(
 
   return true;
 }
+
+export function validityEqual(v1: arrow.Vector, v2: arrow.Vector): boolean {
+  if (v1.length !== v2.length) {
+    return false;
+  }
+
+  if (v1.data.length !== v2.data.length) {
+    console.log("todo: support different data lengths");
+    return false;
+  }
+  for (let i = 0; i < v1.data.length; i++) {
+    const d1 = v1.data[i];
+    const d2 = v2.data[i];
+    // Check that null bitmaps have same length
+    if (d1 !== null && d2 !== null) {
+      if (d1.nullBitmap.length !== d2.nullBitmap.length) {
+        return false;
+      }
+    }
+  }
+
+  for (let i = 0; i < v1.length; i++) {
+    if (v1.isValid(i) !== v2.isValid(i)) {
+      return false;
+    }
+  }
+
+  return true;
+}
