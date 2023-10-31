@@ -104,7 +104,7 @@ Most of the unsupported types should be pretty straightforward to implement; the
 - [x] Large List (Not implemented by Arrow JS but supported by downcasting to `List`.)
 - [x] Fixed-size List
 - [x] Struct
-- [ ] Map
+- [x] Map
 - [ ] Dense Union
 - [ ] Sparse Union
 - [ ] Dictionary-encoded arrays

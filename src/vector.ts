@@ -546,6 +546,36 @@ export function parseData<T extends DataType>(
     });
   }
 
+  if (DataType.isMap(dataType)) {
+    assert(nChildren === 1);
+    const [validityPtr, offsetsPtr] = bufferPtrs;
+    const nullBitmap = parseNullBitmap(
+      dataView.buffer,
+      validityPtr,
+      length,
+      copy
+    );
+    const valueOffsets = copy
+      ? new Int32Array(
+          copyBuffer(
+            dataView.buffer,
+            offsetsPtr,
+            (length + 1) * Int32Array.BYTES_PER_ELEMENT
+          )
+        )
+      : new Int32Array(dataView.buffer, offsetsPtr, length + 1);
+
+    return arrow.makeData({
+      type: dataType,
+      offset,
+      length,
+      nullCount,
+      nullBitmap,
+      valueOffsets,
+      child: children[0],
+    });
+  }
+
   // TODO: sparse union, dense union, dictionary
   throw new Error(`Unsupported type ${dataType}`);
 }

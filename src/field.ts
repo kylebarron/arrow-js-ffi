@@ -155,6 +155,13 @@ export function parseField(buffer: ArrayBuffer, ptr: number): arrow.Field {
     return new arrow.Field(name, type, flags.nullable, metadata);
   }
 
+  // Map
+  if (formatString === "+m") {
+    assert(childrenFields.length === 1);
+    const type = new arrow.Map_(childrenFields[0], flags.mapKeysSorted);
+    return new arrow.Field(name, type, flags.nullable, metadata);
+  }
+
   throw new Error(`Unsupported format: ${formatString}`);
 }
 
