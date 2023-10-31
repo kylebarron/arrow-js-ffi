@@ -115,6 +115,15 @@ def timestamp_array() -> pa.Array:
     return arr
 
 
+def nullable_int() -> pa.Array:
+    # True means null
+    mask = [True, False, True]
+    arr = pa.array([1, 2, 3], type=pa.uint8(), mask=mask)
+    assert isinstance(arr, pa.UInt8Array)
+    assert not arr[0].is_valid
+    return arr
+
+
 class MyExtensionType(pa.ExtensionType):
     """
     Refer to https://arrow.apache.org/docs/python/extending_types.html for
@@ -160,6 +169,7 @@ def table() -> pa.Table:
             "date32": date32_array(),
             "date64": date64_array(),
             "timestamp": timestamp_array(),
+            "nullable_int": nullable_int(),
         }
     )
 
