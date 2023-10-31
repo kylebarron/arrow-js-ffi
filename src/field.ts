@@ -2,7 +2,7 @@
 
 import * as arrow from "apache-arrow";
 import { assert } from "./vector";
-import { LargeBinary, LargeList, LargeUtf8} from './types';
+import { LargeBinary, LargeList, LargeUtf8 } from "./types";
 
 interface Flags {
   nullable: boolean;
@@ -63,6 +63,8 @@ export function parseField(buffer: ArrayBuffer, ptr: number): arrow.Field {
   const nChildren = dataView.getBigInt64(ptr + 24, true);
 
   const ptrToChildrenPtrs = dataView.getUint32(ptr + 32, true);
+  const dictionaryPtr = dataView.getUint32(ptr + 36, true);
+
   const childrenFields: arrow.Field[] = new Array(Number(nChildren));
   for (let i = 0; i < nChildren; i++) {
     childrenFields[i] = parseField(
@@ -71,6 +73,43 @@ export function parseField(buffer: ArrayBuffer, ptr: number): arrow.Field {
     );
   }
 
+  let dictionaryValuesField: arrow.Field | null = null;
+  if (dictionaryPtr !== 0) {
+    dictionaryValuesField = parseField(buffer, dictionaryPtr);
+  }
+
+  const field = parseFieldContent({
+    formatString,
+    name,
+    childrenFields,
+  });
+  if (dictionaryValuesField !== null) {
+    const dictionaryType = new arrow.Dictionary(
+      dictionaryValuesField,
+      field.type,
+      null,
+      flags.dictionaryOrdered
+    );
+    return new arrow.Field(
+      field.name,
+      dictionaryType,
+      flags.nullable,
+      metadata
+    );
+  }
+
+  return field;
+}
+
+function parseFieldContent({
+  formatString,
+  name,
+  childrenFields,
+}: {
+  formatString: string;
+  name: string;
+  childrenFields: arrow.Field[];
+}): arrow.Field {
   const primitiveType = formatMapping[formatString];
   if (primitiveType) {
     return new arrow.Field(name, primitiveType, flags.nullable, metadata);
