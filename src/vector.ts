@@ -64,7 +64,12 @@ export function parseData<T extends DataType>(
 
   if (DataType.isInt(dataType)) {
     const [validityPtr, dataPtr] = bufferPtrs;
-    const nullBitmap = parseNullBitmap(dataView.buffer, validityPtr, copy);
+    const nullBitmap = parseNullBitmap(
+      dataView.buffer,
+      validityPtr,
+      length,
+      copy
+    );
     const byteLength = (length * dataType.bitWidth) / 8;
     const data = copy
       ? new dataType.ArrayType(copyBuffer(dataView.buffer, dataPtr, byteLength))
@@ -81,7 +86,12 @@ export function parseData<T extends DataType>(
 
   if (DataType.isFloat(dataType)) {
     const [validityPtr, dataPtr] = bufferPtrs;
-    const nullBitmap = parseNullBitmap(dataView.buffer, validityPtr, copy);
+    const nullBitmap = parseNullBitmap(
+      dataView.buffer,
+      validityPtr,
+      length,
+      copy
+    );
     // bitwidth doesn't exist on float types I guess
     const byteLength = length * dataType.ArrayType.BYTES_PER_ELEMENT;
     const data = copy
@@ -99,7 +109,12 @@ export function parseData<T extends DataType>(
 
   if (DataType.isBool(dataType)) {
     const [validityPtr, dataPtr] = bufferPtrs;
-    const nullBitmap = parseNullBitmap(dataView.buffer, validityPtr, copy);
+    const nullBitmap = parseNullBitmap(
+      dataView.buffer,
+      validityPtr,
+      length,
+      copy
+    );
 
     // Boolean arrays are bit-packed. This means the byte length should be the number of elements,
     // rounded up to the nearest byte to account for the remainder.
@@ -120,7 +135,12 @@ export function parseData<T extends DataType>(
 
   if (DataType.isDecimal(dataType)) {
     const [validityPtr, dataPtr] = bufferPtrs;
-    const nullBitmap = parseNullBitmap(dataView.buffer, validityPtr, copy);
+    const nullBitmap = parseNullBitmap(
+      dataView.buffer,
+      validityPtr,
+      length,
+      copy
+    );
     const byteLength = (length * dataType.bitWidth) / 8;
     const data = copy
       ? new dataType.ArrayType(copyBuffer(dataView.buffer, dataPtr, byteLength))
@@ -137,7 +157,12 @@ export function parseData<T extends DataType>(
 
   if (DataType.isDate(dataType)) {
     const [validityPtr, dataPtr] = bufferPtrs;
-    const nullBitmap = parseNullBitmap(dataView.buffer, validityPtr, copy);
+    const nullBitmap = parseNullBitmap(
+      dataView.buffer,
+      validityPtr,
+      length,
+      copy
+    );
 
     let byteWidth = getDateByteWidth(dataType);
     const data = copy
@@ -157,7 +182,12 @@ export function parseData<T extends DataType>(
 
   if (DataType.isTime(dataType)) {
     const [validityPtr, dataPtr] = bufferPtrs;
-    const nullBitmap = parseNullBitmap(dataView.buffer, validityPtr, copy);
+    const nullBitmap = parseNullBitmap(
+      dataView.buffer,
+      validityPtr,
+      length,
+      copy
+    );
     const byteLength = (length * dataType.bitWidth) / 8;
     const data = copy
       ? new dataType.ArrayType(copyBuffer(dataView.buffer, dataPtr, byteLength))
@@ -174,7 +204,12 @@ export function parseData<T extends DataType>(
 
   if (DataType.isTimestamp(dataType)) {
     const [validityPtr, dataPtr] = bufferPtrs;
-    const nullBitmap = parseNullBitmap(dataView.buffer, validityPtr, copy);
+    const nullBitmap = parseNullBitmap(
+      dataView.buffer,
+      validityPtr,
+      length,
+      copy
+    );
 
     let byteWidth = getTimeByteWidth(dataType);
     const data = copy
@@ -194,7 +229,12 @@ export function parseData<T extends DataType>(
 
   if (DataType.isInterval(dataType)) {
     const [validityPtr, dataPtr] = bufferPtrs;
-    const nullBitmap = parseNullBitmap(dataView.buffer, validityPtr, copy);
+    const nullBitmap = parseNullBitmap(
+      dataView.buffer,
+      validityPtr,
+      length,
+      copy
+    );
 
     // What's the bitwidth here?
     if (copy) {
@@ -215,7 +255,12 @@ export function parseData<T extends DataType>(
 
   if (DataType.isBinary(dataType)) {
     const [validityPtr, offsetsPtr, dataPtr] = bufferPtrs;
-    const nullBitmap = parseNullBitmap(dataView.buffer, validityPtr, copy);
+    const nullBitmap = parseNullBitmap(
+      dataView.buffer,
+      validityPtr,
+      length,
+      copy
+    );
 
     const valueOffsets = copy
       ? new Int32Array(
@@ -247,7 +292,12 @@ export function parseData<T extends DataType>(
 
   if (isLargeBinary(dataType)) {
     const [validityPtr, offsetsPtr, dataPtr] = bufferPtrs;
-    const nullBitmap = parseNullBitmap(dataView.buffer, validityPtr, copy);
+    const nullBitmap = parseNullBitmap(
+      dataView.buffer,
+      validityPtr,
+      length,
+      copy
+    );
 
     // The original value offsets are an Int64Array, which Arrow JS does not yet support natively
     const originalValueOffsets = new BigInt64Array(
@@ -285,7 +335,12 @@ export function parseData<T extends DataType>(
 
   if (DataType.isUtf8(dataType)) {
     const [validityPtr, offsetsPtr, dataPtr] = bufferPtrs;
-    const nullBitmap = parseNullBitmap(dataView.buffer, validityPtr, copy);
+    const nullBitmap = parseNullBitmap(
+      dataView.buffer,
+      validityPtr,
+      length,
+      copy
+    );
 
     const valueOffsets = copy
       ? new Int32Array(
@@ -317,7 +372,12 @@ export function parseData<T extends DataType>(
 
   if (isLargeUtf8(dataType)) {
     const [validityPtr, offsetsPtr, dataPtr] = bufferPtrs;
-    const nullBitmap = parseNullBitmap(dataView.buffer, validityPtr, copy);
+    const nullBitmap = parseNullBitmap(
+      dataView.buffer,
+      validityPtr,
+      length,
+      copy
+    );
 
     // The original value offsets are an Int64Array, which Arrow JS does not yet support natively
     const originalValueOffsets = new BigInt64Array(
@@ -355,7 +415,12 @@ export function parseData<T extends DataType>(
 
   if (DataType.isFixedSizeBinary(dataType)) {
     const [validityPtr, dataPtr] = bufferPtrs;
-    const nullBitmap = parseNullBitmap(dataView.buffer, validityPtr, copy);
+    const nullBitmap = parseNullBitmap(
+      dataView.buffer,
+      validityPtr,
+      length,
+      copy
+    );
     const data = copy
       ? new dataType.ArrayType(
           copyBuffer(dataView.buffer, dataPtr, length * dataType.byteWidth)
@@ -378,7 +443,12 @@ export function parseData<T extends DataType>(
   if (DataType.isList(dataType)) {
     assert(nChildren === 1);
     const [validityPtr, offsetsPtr] = bufferPtrs;
-    const nullBitmap = parseNullBitmap(dataView.buffer, validityPtr, copy);
+    const nullBitmap = parseNullBitmap(
+      dataView.buffer,
+      validityPtr,
+      length,
+      copy
+    );
     const valueOffsets = copy
       ? new Int32Array(
           copyBuffer(
@@ -404,7 +474,12 @@ export function parseData<T extends DataType>(
     dataType;
     assert(nChildren === 1);
     const [validityPtr, offsetsPtr] = bufferPtrs;
-    const nullBitmap = parseNullBitmap(dataView.buffer, validityPtr, copy);
+    const nullBitmap = parseNullBitmap(
+      dataView.buffer,
+      validityPtr,
+      length,
+      copy
+    );
 
     // The original value offsets are an Int64Array, which Arrow JS does not yet support natively
     const originalValueOffsets = new BigInt64Array(
@@ -435,7 +510,12 @@ export function parseData<T extends DataType>(
   if (DataType.isFixedSizeList(dataType)) {
     assert(nChildren === 1);
     const [validityPtr] = bufferPtrs;
-    const nullBitmap = parseNullBitmap(dataView.buffer, validityPtr, copy);
+    const nullBitmap = parseNullBitmap(
+      dataView.buffer,
+      validityPtr,
+      length,
+      copy
+    );
 
     return arrow.makeData({
       type: dataType,
@@ -449,7 +529,12 @@ export function parseData<T extends DataType>(
 
   if (DataType.isStruct(dataType)) {
     const [validityPtr] = bufferPtrs;
-    const nullBitmap = parseNullBitmap(dataView.buffer, validityPtr, copy);
+    const nullBitmap = parseNullBitmap(
+      dataView.buffer,
+      validityPtr,
+      length,
+      copy
+    );
 
     return arrow.makeData({
       type: dataType,
@@ -490,11 +575,21 @@ function getTimeByteWidth(type: arrow.Time | arrow.Timestamp): number {
 function parseNullBitmap(
   buffer: ArrayBuffer,
   validityPtr: number,
+  length: number,
   copy: boolean
 ): NullBitmap {
-  // TODO: parse validity bitmaps
-  const nullBitmap = validityPtr === 0 ? null : null;
-  return nullBitmap;
+  if (validityPtr === 0) {
+    return null;
+  }
+
+  // Each value takes up one bit
+  const byteLength = (length >> 3) + 1;
+
+  if (copy) {
+    return new Uint8Array(copyBuffer(buffer, validityPtr, byteLength));
+  } else {
+    return new Uint8Array(buffer, validityPtr, byteLength);
+  }
 }
 
 /** Copy existing buffer into new buffer */
