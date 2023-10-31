@@ -44,9 +44,9 @@ export function parseData<T extends DataType>(
   }
 
   const ptrToChildrenPtrs = dataView.getUint32(ptr + 44, true);
-  const children: arrow.Vector[] = new Array(Number(nChildren));
+  const children: arrow.Data[] = new Array(Number(nChildren));
   for (let i = 0; i < nChildren; i++) {
-    children[i] = parseVector(
+    children[i] = parseData(
       buffer,
       dataView.getUint32(ptrToChildrenPtrs + i * 4, true),
       dataType.children[i].type,
