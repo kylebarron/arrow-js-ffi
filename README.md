@@ -107,7 +107,7 @@ Most of the unsupported types should be pretty straightforward to implement; the
 - [ ] Map
 - [ ] Dense Union
 - [ ] Sparse Union
-- [ ] Dictionary-encoded arrays
+- [x] Dictionary-encoded arrays
 
 ### Extension Types
 
