@@ -114,6 +114,7 @@ def timestamp_array() -> pa.Array:
     assert arr.type.tz == "America/New_York"
     return arr
 
+
 def nullable_int() -> pa.Array:
     # True means null
     mask = [True, False, True]
@@ -174,6 +175,7 @@ def dense_union_array() -> pa.Array:
     assert union_arr[2].as_py() is True
 
     return union_arr
+
 
 class MyExtensionType(pa.ExtensionType):
     """
