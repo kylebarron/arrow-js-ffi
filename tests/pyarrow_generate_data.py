@@ -114,6 +114,14 @@ def timestamp_array() -> pa.Array:
     assert arr.type.tz == "America/New_York"
     return arr
 
+def nullable_int() -> pa.Array:
+    # True means null
+    mask = [True, False, True]
+    arr = pa.array([1, 2, 3], type=pa.uint8(), mask=mask)
+    assert isinstance(arr, pa.UInt8Array)
+    assert not arr[0].is_valid
+    return arr
+
 
 def sparse_union_array() -> pa.Array:
     """Generate a sparse union array
@@ -167,7 +175,6 @@ def dense_union_array() -> pa.Array:
 
     return union_arr
 
-
 class MyExtensionType(pa.ExtensionType):
     """
     Refer to https://arrow.apache.org/docs/python/extending_types.html for
@@ -213,6 +220,7 @@ def table() -> pa.Table:
             "date32": date32_array(),
             "date64": date64_array(),
             "timestamp": timestamp_array(),
+            "nullable_int": nullable_int(),
             "sparse_union": sparse_union_array(),
             # "dense_union": dense_union_array(),
         }

@@ -2,7 +2,12 @@ import { readFileSync } from "fs";
 import { describe, it, expect } from "vitest";
 import * as arrow from "apache-arrow";
 import * as wasm from "rust-arrow-ffi";
-import { arrowTableToFFI, arraysEqual, loadIPCTableFromDisk } from "./utils";
+import {
+  arrowTableToFFI,
+  arraysEqual,
+  loadIPCTableFromDisk,
+  validityEqual,
+} from "./utils";
 import { parseField, parseVector } from "../src";
 import { Type } from "../src/types";
 
@@ -622,3 +627,37 @@ describe("date32", (t) => {
 //     expect(originalVector.get(i), wasmVector.get(i));
 //   }
 // });
+
+describe("nullable int", (t) => {
+  function test(copy: boolean) {
+    let columnIndex = TEST_TABLE.schema.fields.findIndex(
+      (field) => field.name == "nullable_int"
+    );
+
+    const originalField = TEST_TABLE.schema.fields[columnIndex];
+    // declare it's not null
+    const originalVector = TEST_TABLE.getChildAt(columnIndex) as arrow.Vector;
+    const fieldPtr = FFI_TABLE.schemaAddr(columnIndex);
+    const field = parseField(WASM_MEMORY.buffer, fieldPtr);
+
+    expect(field.name).toStrictEqual(originalField.name);
+    expect(field.typeId).toStrictEqual(originalField.typeId);
+    expect(field.nullable).toStrictEqual(originalField.nullable);
+
+    const arrayPtr = FFI_TABLE.arrayAddr(0, columnIndex);
+    const wasmVector = parseVector(
+      WASM_MEMORY.buffer,
+      arrayPtr,
+      field.type,
+      copy
+    );
+
+    expect(
+      validityEqual(originalVector, wasmVector),
+      "validity should be equal"
+    ).toBeTruthy();
+  }
+
+  it("copy=false", () => test(false));
+  it("copy=true", () => test(true));
+});
