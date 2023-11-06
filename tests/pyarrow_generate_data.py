@@ -142,6 +142,7 @@ def sparse_union_array() -> pa.Array:
     union_arr = pa.UnionArray.from_sparse(types, [xs, ys])
 
     assert isinstance(union_arr, pa.UnionArray)
+    assert isinstance(union_arr.type, pa.SparseUnionType)
     assert union_arr[0].as_py() == 5
     assert union_arr[1].as_py() is False
     assert union_arr[2].as_py() is True
@@ -170,6 +171,7 @@ def dense_union_array() -> pa.Array:
     union_arr = pa.UnionArray.from_dense(types, offsets, [xs, ys])
 
     assert isinstance(union_arr, pa.UnionArray)
+    assert isinstance(union_arr.type, pa.DenseUnionType)
     assert union_arr[0].as_py() == 5
     assert union_arr[1].as_py() is False
     assert union_arr[2].as_py() is True
@@ -224,7 +226,7 @@ def table() -> pa.Table:
             "timestamp": timestamp_array(),
             "nullable_int": nullable_int(),
             "sparse_union": sparse_union_array(),
-            # "dense_union": dense_union_array(),
+            "dense_union": dense_union_array(),
         }
     )
 
