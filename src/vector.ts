@@ -569,18 +569,13 @@ export function parseData<T extends DataType>(
         )
       : new Int8Array(dataView.buffer, typeIdsPtr, length + 1);
 
-    let childData = children.map((child) => {
-      assert(child.data.length === 1);
-      return child.data[0];
-    });
-
     return arrow.makeData({
       type: dataType,
       offset,
       length,
       nullCount,
       typeIds,
-      children: childData,
+      children,
       valueOffsets,
     });
   }
@@ -598,18 +593,13 @@ export function parseData<T extends DataType>(
         )
       : new Int8Array(dataView.buffer, typeIdsPtr, length + 1);
 
-    let childData = children.map((child) => {
-      assert(child.data.length === 1);
-      return child.data[0];
-    });
-
     return arrow.makeData({
       type: dataType,
       offset,
       length,
       nullCount,
       typeIds,
-      children: childData,
+      children,
     });
   }
 
