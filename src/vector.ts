@@ -546,7 +546,64 @@ export function parseData<T extends DataType>(
     });
   }
 
-  // TODO: sparse union, dense union, dictionary
+  if (DataType.isDenseUnion(dataType)) {
+    const [typeIdsPtr, offsetsPtr] = bufferPtrs;
+
+    const valueOffsets = copy
+      ? new Int32Array(
+          copyBuffer(
+            dataView.buffer,
+            offsetsPtr,
+            (length + 1) * Int32Array.BYTES_PER_ELEMENT
+          )
+        )
+      : new Int32Array(dataView.buffer, offsetsPtr, length + 1);
+
+    const typeIds = copy
+      ? new Int8Array(
+          copyBuffer(
+            dataView.buffer,
+            typeIdsPtr,
+            (length + 1) * Int8Array.BYTES_PER_ELEMENT
+          )
+        )
+      : new Int8Array(dataView.buffer, typeIdsPtr, length + 1);
+
+    return arrow.makeData({
+      type: dataType,
+      offset,
+      length,
+      nullCount,
+      typeIds,
+      children,
+      valueOffsets,
+    });
+  }
+
+  if (DataType.isSparseUnion(dataType)) {
+    const [typeIdsPtr] = bufferPtrs;
+
+    const typeIds = copy
+      ? new Int8Array(
+          copyBuffer(
+            dataView.buffer,
+            typeIdsPtr,
+            (length + 1) * Int8Array.BYTES_PER_ELEMENT
+          )
+        )
+      : new Int8Array(dataView.buffer, typeIdsPtr, length + 1);
+
+    return arrow.makeData({
+      type: dataType,
+      offset,
+      length,
+      nullCount,
+      typeIds,
+      children,
+    });
+  }
+
+  // TODO: map arrays, dictionary encoding
   throw new Error(`Unsupported type ${dataType}`);
 }
 

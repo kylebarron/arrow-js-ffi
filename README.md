@@ -105,8 +105,8 @@ Most of the unsupported types should be pretty straightforward to implement; the
 - [x] Fixed-size List
 - [x] Struct
 - [ ] Map
-- [ ] Dense Union
-- [ ] Sparse Union
+- [x] Dense Union
+- [x] Sparse Union
 - [ ] Dictionary-encoded arrays
 
 ### Extension Types

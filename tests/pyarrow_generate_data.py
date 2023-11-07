@@ -124,6 +124,61 @@ def nullable_int() -> pa.Array:
     return arr
 
 
+def sparse_union_array() -> pa.Array:
+    """Generate a sparse union array
+
+    This is derived from the example here https://arrow.apache.org/docs/python/data#union-arrays
+    """
+    # First child array
+    xs = pa.array([5, 6, 7])
+
+    # Second child array
+    ys = pa.array([False, False, True])
+
+    # Type mapping
+    types = pa.array([0, 1, 1], type=pa.int8())
+
+    # Union array
+    union_arr = pa.UnionArray.from_sparse(types, [xs, ys])
+
+    assert isinstance(union_arr, pa.UnionArray)
+    assert isinstance(union_arr.type, pa.SparseUnionType)
+    assert union_arr[0].as_py() == 5
+    assert union_arr[1].as_py() is False
+    assert union_arr[2].as_py() is True
+
+    return union_arr
+
+
+def dense_union_array() -> pa.Array:
+    """Generate a dense union array
+
+    This is derived from the example here https://arrow.apache.org/docs/python/data#union-arrays
+    """
+    # First child array
+    xs = pa.array([5])
+
+    # Second child array
+    ys = pa.array([False, True])
+
+    # Type mapping
+    types = pa.array([0, 1, 1], type=pa.int8())
+
+    # Offsets array
+    offsets = pa.array([0, 0, 1], type=pa.int32())
+
+    # Union array
+    union_arr = pa.UnionArray.from_dense(types, offsets, [xs, ys])
+
+    assert isinstance(union_arr, pa.UnionArray)
+    assert isinstance(union_arr.type, pa.DenseUnionType)
+    assert union_arr[0].as_py() == 5
+    assert union_arr[1].as_py() is False
+    assert union_arr[2].as_py() is True
+
+    return union_arr
+
+
 class MyExtensionType(pa.ExtensionType):
     """
     Refer to https://arrow.apache.org/docs/python/extending_types.html for
@@ -170,6 +225,8 @@ def table() -> pa.Table:
             "date64": date64_array(),
             "timestamp": timestamp_array(),
             "nullable_int": nullable_int(),
+            "sparse_union": sparse_union_array(),
+            "dense_union": dense_union_array(),
         }
     )
 

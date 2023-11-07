@@ -2,7 +2,7 @@
 
 import * as arrow from "apache-arrow";
 import { assert } from "./vector";
-import { LargeBinary, LargeList, LargeUtf8} from './types';
+import { LargeBinary, LargeList, LargeUtf8 } from "./types";
 
 interface Flags {
   nullable: boolean;
@@ -152,6 +152,20 @@ export function parseField(buffer: ArrayBuffer, ptr: number): arrow.Field {
     // The size of the list is the integer after the colon
     const innerSize = parseInt(formatString.slice(3));
     const type = new arrow.FixedSizeList(innerSize, childrenFields[0]);
+    return new arrow.Field(name, type, flags.nullable, metadata);
+  }
+
+  // Dense union
+  if (formatString.slice(0, 4) === "+ud:") {
+    const typeIds = formatString.slice(4).split(",").map(Number);
+    const type = new arrow.DenseUnion(typeIds, childrenFields);
+    return new arrow.Field(name, type, flags.nullable, metadata);
+  }
+
+  // Sparse union
+  if (formatString.slice(0, 4) === "+us:") {
+    const typeIds = formatString.slice(4).split(",").map(Number);
+    const type = new arrow.SparseUnion(typeIds, childrenFields);
     return new arrow.Field(name, type, flags.nullable, metadata);
   }
 
