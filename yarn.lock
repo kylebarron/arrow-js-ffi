@@ -372,86 +372,86 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rollup/rollup-android-arm-eabi@npm:4.1.5":
-  version: 4.1.5
-  resolution: "@rollup/rollup-android-arm-eabi@npm:4.1.5"
+"@rollup/rollup-android-arm-eabi@npm:4.3.0":
+  version: 4.3.0
+  resolution: "@rollup/rollup-android-arm-eabi@npm:4.3.0"
   conditions: os=android & cpu=arm
   languageName: node
   linkType: hard
 
-"@rollup/rollup-android-arm64@npm:4.1.5":
-  version: 4.1.5
-  resolution: "@rollup/rollup-android-arm64@npm:4.1.5"
+"@rollup/rollup-android-arm64@npm:4.3.0":
+  version: 4.3.0
+  resolution: "@rollup/rollup-android-arm64@npm:4.3.0"
   conditions: os=android & cpu=arm64
   languageName: node
   linkType: hard
 
-"@rollup/rollup-darwin-arm64@npm:4.1.5":
-  version: 4.1.5
-  resolution: "@rollup/rollup-darwin-arm64@npm:4.1.5"
+"@rollup/rollup-darwin-arm64@npm:4.3.0":
+  version: 4.3.0
+  resolution: "@rollup/rollup-darwin-arm64@npm:4.3.0"
   conditions: os=darwin & cpu=arm64
   languageName: node
   linkType: hard
 
-"@rollup/rollup-darwin-x64@npm:4.1.5":
-  version: 4.1.5
-  resolution: "@rollup/rollup-darwin-x64@npm:4.1.5"
+"@rollup/rollup-darwin-x64@npm:4.3.0":
+  version: 4.3.0
+  resolution: "@rollup/rollup-darwin-x64@npm:4.3.0"
   conditions: os=darwin & cpu=x64
   languageName: node
   linkType: hard
 
-"@rollup/rollup-linux-arm-gnueabihf@npm:4.1.5":
-  version: 4.1.5
-  resolution: "@rollup/rollup-linux-arm-gnueabihf@npm:4.1.5"
+"@rollup/rollup-linux-arm-gnueabihf@npm:4.3.0":
+  version: 4.3.0
+  resolution: "@rollup/rollup-linux-arm-gnueabihf@npm:4.3.0"
   conditions: os=linux & cpu=arm
   languageName: node
   linkType: hard
 
-"@rollup/rollup-linux-arm64-gnu@npm:4.1.5":
-  version: 4.1.5
-  resolution: "@rollup/rollup-linux-arm64-gnu@npm:4.1.5"
+"@rollup/rollup-linux-arm64-gnu@npm:4.3.0":
+  version: 4.3.0
+  resolution: "@rollup/rollup-linux-arm64-gnu@npm:4.3.0"
   conditions: os=linux & cpu=arm64 & libc=glibc
   languageName: node
   linkType: hard
 
-"@rollup/rollup-linux-arm64-musl@npm:4.1.5":
-  version: 4.1.5
-  resolution: "@rollup/rollup-linux-arm64-musl@npm:4.1.5"
+"@rollup/rollup-linux-arm64-musl@npm:4.3.0":
+  version: 4.3.0
+  resolution: "@rollup/rollup-linux-arm64-musl@npm:4.3.0"
   conditions: os=linux & cpu=arm64 & libc=musl
   languageName: node
   linkType: hard
 
-"@rollup/rollup-linux-x64-gnu@npm:4.1.5":
-  version: 4.1.5
-  resolution: "@rollup/rollup-linux-x64-gnu@npm:4.1.5"
+"@rollup/rollup-linux-x64-gnu@npm:4.3.0":
+  version: 4.3.0
+  resolution: "@rollup/rollup-linux-x64-gnu@npm:4.3.0"
   conditions: os=linux & cpu=x64 & libc=glibc
   languageName: node
   linkType: hard
 
-"@rollup/rollup-linux-x64-musl@npm:4.1.5":
-  version: 4.1.5
-  resolution: "@rollup/rollup-linux-x64-musl@npm:4.1.5"
+"@rollup/rollup-linux-x64-musl@npm:4.3.0":
+  version: 4.3.0
+  resolution: "@rollup/rollup-linux-x64-musl@npm:4.3.0"
   conditions: os=linux & cpu=x64 & libc=musl
   languageName: node
   linkType: hard
 
-"@rollup/rollup-win32-arm64-msvc@npm:4.1.5":
-  version: 4.1.5
-  resolution: "@rollup/rollup-win32-arm64-msvc@npm:4.1.5"
+"@rollup/rollup-win32-arm64-msvc@npm:4.3.0":
+  version: 4.3.0
+  resolution: "@rollup/rollup-win32-arm64-msvc@npm:4.3.0"
   conditions: os=win32 & cpu=arm64
   languageName: node
   linkType: hard
 
-"@rollup/rollup-win32-ia32-msvc@npm:4.1.5":
-  version: 4.1.5
-  resolution: "@rollup/rollup-win32-ia32-msvc@npm:4.1.5"
+"@rollup/rollup-win32-ia32-msvc@npm:4.3.0":
+  version: 4.3.0
+  resolution: "@rollup/rollup-win32-ia32-msvc@npm:4.3.0"
   conditions: os=win32 & cpu=ia32
   languageName: node
   linkType: hard
 
-"@rollup/rollup-win32-x64-msvc@npm:4.1.5":
-  version: 4.1.5
-  resolution: "@rollup/rollup-win32-x64-msvc@npm:4.1.5"
+"@rollup/rollup-win32-x64-msvc@npm:4.3.0":
+  version: 4.3.0
+  resolution: "@rollup/rollup-win32-x64-msvc@npm:4.3.0"
   conditions: os=win32 & cpu=x64
   languageName: node
   linkType: hard
@@ -2094,21 +2094,21 @@ __metadata:
   linkType: hard
 
 "rollup@npm:^4.1.4, rollup@npm:^4.1.5":
-  version: 4.1.5
-  resolution: "rollup@npm:4.1.5"
+  version: 4.3.0
+  resolution: "rollup@npm:4.3.0"
   dependencies:
-    "@rollup/rollup-android-arm-eabi": 4.1.5
-    "@rollup/rollup-android-arm64": 4.1.5
-    "@rollup/rollup-darwin-arm64": 4.1.5
-    "@rollup/rollup-darwin-x64": 4.1.5
-    "@rollup/rollup-linux-arm-gnueabihf": 4.1.5
-    "@rollup/rollup-linux-arm64-gnu": 4.1.5
-    "@rollup/rollup-linux-arm64-musl": 4.1.5
-    "@rollup/rollup-linux-x64-gnu": 4.1.5
-    "@rollup/rollup-linux-x64-musl": 4.1.5
-    "@rollup/rollup-win32-arm64-msvc": 4.1.5
-    "@rollup/rollup-win32-ia32-msvc": 4.1.5
-    "@rollup/rollup-win32-x64-msvc": 4.1.5
+    "@rollup/rollup-android-arm-eabi": 4.3.0
+    "@rollup/rollup-android-arm64": 4.3.0
+    "@rollup/rollup-darwin-arm64": 4.3.0
+    "@rollup/rollup-darwin-x64": 4.3.0
+    "@rollup/rollup-linux-arm-gnueabihf": 4.3.0
+    "@rollup/rollup-linux-arm64-gnu": 4.3.0
+    "@rollup/rollup-linux-arm64-musl": 4.3.0
+    "@rollup/rollup-linux-x64-gnu": 4.3.0
+    "@rollup/rollup-linux-x64-musl": 4.3.0
+    "@rollup/rollup-win32-arm64-msvc": 4.3.0
+    "@rollup/rollup-win32-ia32-msvc": 4.3.0
+    "@rollup/rollup-win32-x64-msvc": 4.3.0
     fsevents: ~2.3.2
   dependenciesMeta:
     "@rollup/rollup-android-arm-eabi":
@@ -2139,14 +2139,14 @@ __metadata:
       optional: true
   bin:
     rollup: dist/bin/rollup
-  checksum: f323c5f61e49892e565c46f0114908ba58cc6139a2c1940181f3c82f8ba1bd608fabc833f35b679113b156dc1960ad5aa8bdf7ef987a9116f8db767293c52d95
+  checksum: 8791b160407188a794fa4a529d1740e2310625254450753d2d8413cf26855ed8758146e110724492df8d6a108a5362c999f07a387c52143afc20cf27695b34c2
   languageName: node
   linkType: hard
 
 "rust-arrow-ffi@file:./tests/rust-arrow-ffi/pkg/::locator=arrow-js-ffi%40workspace%3A.":
   version: 0.1.0
-  resolution: "rust-arrow-ffi@file:./tests/rust-arrow-ffi/pkg/#./tests/rust-arrow-ffi/pkg/::hash=5ca7ce&locator=arrow-js-ffi%40workspace%3A."
-  checksum: 7882af0f717cec41d3fc8cda5975f571dc3418a1cadd17923634c3db844779e105b88fa2e1b35a3c422af09d93ad37421ce57a14bbad851086ae75d628b90121
+  resolution: "rust-arrow-ffi@file:./tests/rust-arrow-ffi/pkg/#./tests/rust-arrow-ffi/pkg/::hash=bcf19e&locator=arrow-js-ffi%40workspace%3A."
+  checksum: 254633ac83b71c221bfb98e988d0cf5bce5bd910aadca969681f69ea91987bbd4c60a80a7fab0b8977f01fd3f9e10e7f4c3c3eca94f26332227446624cde7c80
   languageName: node
   linkType: hard
 
@@ -2530,11 +2530,11 @@ __metadata:
 
 "typescript@patch:typescript@^5.2.2#~builtin<compat/typescript>":
   version: 5.2.2
-  resolution: "typescript@patch:typescript@npm%3A5.2.2#~builtin<compat/typescript>::version=5.2.2&hash=ad5954"
+  resolution: "typescript@patch:typescript@npm%3A5.2.2#~builtin<compat/typescript>::version=5.2.2&hash=f3b441"
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver
-  checksum: 07106822b4305de3f22835cbba949a2b35451cad50888759b6818421290ff95d522b38ef7919e70fb381c5fe9c1c643d7dea22c8b31652a717ddbd57b7f4d554
+  checksum: 0f4da2f15e6f1245e49db15801dbee52f2bbfb267e1c39225afdab5afee1a72839cd86000e65ee9d7e4dfaff12239d28beaf5ee431357fcced15fb08583d72ca
   languageName: node
   linkType: hard
 
