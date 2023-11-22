@@ -785,7 +785,7 @@ __metadata:
     prettier: "npm:^3.1.0"
     rollup: "npm:^4.1.5"
     rollup-plugin-dts: "npm:^6.1.0"
-    rust-arrow-ffi: ./tests/rust-arrow-ffi/pkg/
+    rust-arrow-ffi: "link:./tests/rust-arrow-ffi/pkg/"
     ts-node: "npm:^10.9.1"
     typescript: "npm:^5.2.2"
     vitest: "npm:^0.34.6"
@@ -2153,12 +2153,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rust-arrow-ffi@file:./tests/rust-arrow-ffi/pkg/::locator=arrow-js-ffi%40workspace%3A.":
-  version: 0.1.0
-  resolution: "rust-arrow-ffi@file:./tests/rust-arrow-ffi/pkg/#./tests/rust-arrow-ffi/pkg/::hash=1f7172&locator=arrow-js-ffi%40workspace%3A."
-  checksum: 9037a4f542fa31a062fcc4726745618b1e620240be88d04b95ea67db3669e2d05606cc8dc5acfc70faea91aa53807e48dd4194240c295423885b8a5f8d74fc9d
+"rust-arrow-ffi@link:./tests/rust-arrow-ffi/pkg/::locator=arrow-js-ffi%40workspace%3A.":
+  version: 0.0.0-use.local
+  resolution: "rust-arrow-ffi@link:./tests/rust-arrow-ffi/pkg/::locator=arrow-js-ffi%40workspace%3A."
   languageName: node
-  linkType: hard
+  linkType: soft
 
 "safe-buffer@npm:^5.1.0, safe-buffer@npm:~5.2.0":
   version: 5.2.1
