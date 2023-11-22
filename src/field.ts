@@ -67,7 +67,7 @@ export function parseField(buffer: ArrayBuffer, ptr: number): arrow.Field {
   for (let i = 0; i < nChildren; i++) {
     childrenFields[i] = parseField(
       buffer,
-      dataView.getUint32(ptrToChildrenPtrs + i * 4, true)
+      dataView.getUint32(ptrToChildrenPtrs + i * 4, true),
     );
   }
 
@@ -194,7 +194,7 @@ function parseFlags(flag: bigint): Flags {
 function parseNullTerminatedString(
   dataView: DataView,
   ptr: number,
-  maxBytesToRead: number = Infinity
+  maxBytesToRead: number = Infinity,
 ): string {
   const maxPtr = Math.min(ptr + maxBytesToRead, dataView.byteLength);
   let end = ptr;
@@ -213,7 +213,7 @@ function parseNullTerminatedString(
  */
 function parseMetadata(
   dataView: DataView,
-  ptr: number
+  ptr: number,
 ): Map<string, string> | null {
   const numEntries = dataView.getInt32(ptr, true);
   if (numEntries === 0) {
@@ -227,14 +227,14 @@ function parseMetadata(
     const keyByteLength = dataView.getInt32(ptr, true);
     ptr += 4;
     const key = UTF8_DECODER.decode(
-      new Uint8Array(dataView.buffer, ptr, keyByteLength)
+      new Uint8Array(dataView.buffer, ptr, keyByteLength),
     );
     ptr += keyByteLength;
 
     const valueByteLength = dataView.getInt32(ptr, true);
     ptr += 4;
     const value = UTF8_DECODER.decode(
-      new Uint8Array(dataView.buffer, ptr, valueByteLength)
+      new Uint8Array(dataView.buffer, ptr, valueByteLength),
     );
     ptr += valueByteLength;
 
