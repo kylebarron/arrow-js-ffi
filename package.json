@@ -21,8 +21,11 @@
   "type": "module",
   "scripts": {
     "build": "rollup -c rollup.config.js",
-    "watch": "tsc --watch --declaration",
-    "test": "vitest run"
+    "fmt:check": "prettier './src/**/*.ts' --check",
+    "fmt": "prettier './src/**/*.ts' --write",
+    "test": "vitest run",
+    "typecheck": "tsc --build",
+    "watch": "tsc --watch --declaration"
   },
   "files": [
     "dist/",
@@ -35,6 +38,7 @@
     "@rollup/plugin-terser": "^0.4.3",
     "@rollup/plugin-typescript": "^11.1.2",
     "apache-arrow": "^14",
+    "prettier": "^3.1.0",
     "rollup": "^4.1.5",
     "rollup-plugin-dts": "^6.1.0",
     "rust-arrow-ffi": "./tests/rust-arrow-ffi/pkg/",
@@ -43,6 +47,7 @@
     "vitest": "^0.34.6"
   },
   "volta": {
-    "node": "20.9.0"
+    "node": "20.9.0",
+    "yarn": "4.0.2"
   }
 }
