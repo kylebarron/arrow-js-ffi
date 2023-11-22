@@ -20,7 +20,7 @@ export function parseRecordBatch(
   buffer: ArrayBuffer,
   arrayPtr: number,
   schemaPtr: number,
-  copy: boolean = false
+  copy: boolean = false,
 ): arrow.RecordBatch {
   const field = parseField(buffer, schemaPtr);
   if (!isStructField(field)) {
