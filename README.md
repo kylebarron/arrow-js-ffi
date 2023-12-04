@@ -24,6 +24,24 @@ const WASM_MEMORY: WebAssembly.Memory = ...
 const field = parseField(WASM_MEMORY.buffer, fieldPtr);
 ```
 
+### `parseData`
+
+Parse an [`ArrowArray`](https://arrow.apache.org/docs/format/CDataInterface.html#the-arrowarray-structure) C FFI struct into an [`arrow.Data`](https://arrow.apache.org/docs/js/classes/Arrow_dom.Data.html) instance. Multiple `Data` instances can be joined to make an [`arrow.Vector`](https://arrow.apache.org/docs/js/classes/Arrow_dom.Vector.html).
+
+- `buffer` (`ArrayBuffer`): The [`WebAssembly.Memory`](https://developer.mozilla.org/en-US/docs/WebAssembly/JavaScript_interface/Memory) instance to read from.
+- `ptr` (`number`): The numeric pointer in `buffer` where the C struct is located.
+- `dataType` (`arrow.DataType`): The type of the vector to parse. This is retrieved from `field.type` on the result of `parseField`.
+- `copy` (`boolean`, default: `true`): If `true`, will _copy_ data across the Wasm boundary, allowing you to delete the copy on the Wasm side. If `false`, the resulting `arrow.Data` objects will be _views_ on Wasm memory. This requires careful usage as the arrays will become invalid if the memory region in Wasm changes.
+
+#### Example
+
+```ts
+const WASM_MEMORY: WebAssembly.Memory = ...
+const copiedData = parseData(WASM_MEMORY.buffer, arrayPtr, field.type);
+// Make zero-copy views instead of copying array contents
+const viewedData = parseData(WASM_MEMORY.buffer, arrayPtr, field.type, false);
+```
+
 ### `parseVector`
 
 Parse an [`ArrowArray`](https://arrow.apache.org/docs/format/CDataInterface.html#the-arrowarray-structure) C FFI struct into an [`arrow.Vector`](https://arrow.apache.org/docs/js/classes/Arrow_dom.Vector.html) instance. Multiple `Vector` instances can be joined to make an [`arrow.Table`](https://arrow.apache.org/docs/js/classes/Arrow_dom.Table.html).
@@ -31,13 +49,15 @@ Parse an [`ArrowArray`](https://arrow.apache.org/docs/format/CDataInterface.html
 - `buffer` (`ArrayBuffer`): The [`WebAssembly.Memory`](https://developer.mozilla.org/en-US/docs/WebAssembly/JavaScript_interface/Memory) instance to read from.
 - `ptr` (`number`): The numeric pointer in `buffer` where the C struct is located.
 - `dataType` (`arrow.DataType`): The type of the vector to parse. This is retrieved from `field.type` on the result of `parseField`.
-- `copy` (`boolean`): If `true`, will _copy_ data across the Wasm boundary, allowing you to delete the copy on the Wasm side. If `false`, the resulting `arrow.Vector` objects will be _views_ on Wasm memory. This requires careful usage as the arrays will become invalid if the memory region in Wasm changes.
+- `copy` (`boolean`, default: `true`): If `true`, will _copy_ data across the Wasm boundary, allowing you to delete the copy on the Wasm side. If `false`, the resulting `arrow.Vector` objects will be _views_ on Wasm memory. This requires careful usage as the arrays will become invalid if the memory region in Wasm changes.
+
+#### Example
 
 ```ts
 const WASM_MEMORY: WebAssembly.Memory = ...
-const wasmVector = parseVector(WASM_MEMORY.buffer, arrayPtr, field.type);
-// Copy arrays into JS instead of creating views
-const wasmVector = parseVector(WASM_MEMORY.buffer, arrayPtr, field.type, true);
+const copiedVector = parseVector(WASM_MEMORY.buffer, arrayPtr, field.type);
+// Make zero-copy views instead of copying array contents
+const viewedVector = parseVector(WASM_MEMORY.buffer, arrayPtr, field.type, false);
 ```
 
 ### `parseRecordBatch`
@@ -47,12 +67,24 @@ Parse an [`ArrowArray`](https://arrow.apache.org/docs/format/CDataInterface.html
 - `buffer` (`ArrayBuffer`): The [`WebAssembly.Memory`](https://developer.mozilla.org/en-US/docs/WebAssembly/JavaScript_interface/Memory) instance to read from.
 - `arrayPtr` (`number`): The numeric pointer in `buffer` where the _array_ C struct is located.
 - `schemaPtr` (`number`): The numeric pointer in `buffer` where the _field_ C struct is located.
-- `copy` (`boolean`): If `true`, will _copy_ data across the Wasm boundary, allowing you to delete the copy on the Wasm side. If `false`, the resulting `arrow.Vector` objects will be _views_ on Wasm memory. This requires careful usage as the arrays will become invalid if the memory region in Wasm changes.
+- `copy` (`boolean`, default: `true`): If `true`, will _copy_ data across the Wasm boundary, allowing you to delete the copy on the Wasm side. If `false`, the resulting `arrow.Vector` objects will be _views_ on Wasm memory. This requires careful usage as the arrays will become invalid if the memory region in Wasm changes.
+
+#### Example
 
 ```ts
 const WASM_MEMORY: WebAssembly.Memory = ...
-// Pass `true` to copy arrays across the boundary instead of creating views.
-const recordBatch = parseRecordBatch(WASM_MEMORY.buffer, arrayPtr, fieldPtr, true);
+const copiedRecordBatch = parseRecordBatch(
+    WASM_MEMORY.buffer,
+    arrayPtr,
+    fieldPtr
+);
+// Pass `false` to view arrays across the boundary instead of creating copies.
+const viewedRecordBatch = parseRecordBatch(
+    WASM_MEMORY.buffer,
+    arrayPtr,
+    fieldPtr,
+    false
+);
 ```
 
 ## Type Support
