@@ -24,6 +24,18 @@ const WASM_MEMORY: WebAssembly.Memory = ...
 const field = parseField(WASM_MEMORY.buffer, fieldPtr);
 ```
 
+### `parseSchema`
+
+Parse an [`ArrowSchema`](https://arrow.apache.org/docs/format/CDataInterface.html#the-arrowschema-structure) C FFI struct into an `arrow.Schema` instance. Note that the underlying field **must** be a `Struct` type. In essence a `Struct` field is used to mimic a `Schema` while only being one field.
+
+- `buffer` (`ArrayBuffer`): The [`WebAssembly.Memory`](https://developer.mozilla.org/en-US/docs/WebAssembly/JavaScript_interface/Memory) instance to read from.
+- `ptr` (`number`): The numeric pointer in `buffer` where the C struct is located.
+
+```js
+const WASM_MEMORY: WebAssembly.Memory = ...
+const schema = parseSchema(WASM_MEMORY.buffer, fieldPtr);
+```
+
 ### `parseData`
 
 Parse an [`ArrowArray`](https://arrow.apache.org/docs/format/CDataInterface.html#the-arrowarray-structure) C FFI struct into an [`arrow.Data`](https://arrow.apache.org/docs/js/classes/Arrow_dom.Data.html) instance. Multiple `Data` instances can be joined to make an [`arrow.Vector`](https://arrow.apache.org/docs/js/classes/Arrow_dom.Vector.html).
