@@ -12,10 +12,7 @@ const WASM_MEMORY: WebAssembly.Memory = ...
 const schema = parseSchema(WASM_MEMORY.buffer, fieldPtr);
 ```
  */
-export function parseSchema(
-  buffer: ArrayBuffer,
-  ptr: number,
-): arrow.Schema {
+export function parseSchema(buffer: ArrayBuffer, ptr: number): arrow.Schema {
   const field = parseField(buffer, ptr);
   if (!isStructField(field)) {
     throw new Error("Expected struct");
