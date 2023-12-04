@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 
 import numpy as np
@@ -130,6 +130,16 @@ def duration_array() -> pa.Array:
     return arr
 
 
+def interval_array() -> pa.Array:
+    val = timedelta(
+        days=1, seconds=1, microseconds=1, milliseconds=1, minutes=1, hours=1, weeks=1
+    )
+    arr = pa.array([val, val, val], pa.month_day_nano_interval())
+
+    assert isinstance(arr, pa.MonthDayNanoIntervalArray)
+    return arr
+
+
 def nullable_int() -> pa.Array:
     # True means null
     mask = [True, False, True]
@@ -243,9 +253,9 @@ def table() -> pa.Table:
             "sparse_union": sparse_union_array(),
             "dense_union": dense_union_array(),
             "duration": duration_array(),
+            "interval": interval_array(),
         }
     )
-
 
 def large_table() -> pa.Table:
     # Important: the order of these columns cannot change
