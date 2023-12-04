@@ -20,6 +20,7 @@ export enum Type {
   FixedSizeBinary = 15 /** Fixed-size binary. Each value occupies the same number of bytes */,
   FixedSizeList = 16 /** Fixed-size list. Each value occupies the same number of bytes */,
   Map = 17 /** Map of named logical types */,
+  Duration = 18 /** Measure of elapsed time in either seconds, milliseconds, microseconds or nanoseconds. */,
 
   // These 3 are not included in the upstream enum
   LargeList = 30,

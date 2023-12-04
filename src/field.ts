@@ -118,6 +118,31 @@ export function parseField(buffer: ArrayBuffer, ptr: number): arrow.Field {
     return new arrow.Field(name, type, flags.nullable, metadata);
   }
 
+  // duration
+  if (formatString.slice(0, 2) === "tD") {
+    let timeUnit: arrow.TimeUnit | null = null;
+    switch (formatString[2]) {
+      case "s":
+        timeUnit = arrow.TimeUnit.SECOND;
+        break;
+      case "m":
+        timeUnit = arrow.TimeUnit.MILLISECOND;
+        break;
+      case "u":
+        timeUnit = arrow.TimeUnit.MICROSECOND;
+        break;
+      case "n":
+        timeUnit = arrow.TimeUnit.NANOSECOND;
+        break;
+
+      default:
+        throw new Error(`invalid timestamp ${formatString}`);
+    }
+
+    const type = new arrow.Duration(timeUnit);
+    return new arrow.Field(name, type, flags.nullable, metadata);
+  }
+
   // struct
   if (formatString === "+s") {
     const type = new arrow.Struct(childrenFields);
