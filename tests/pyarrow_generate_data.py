@@ -2,6 +2,7 @@ from datetime import date, datetime
 from decimal import Decimal
 
 import numpy as np
+import pandas as pd
 import pyarrow as pa
 import pyarrow.feather as feather
 
@@ -112,6 +113,20 @@ def timestamp_array() -> pa.Array:
     assert isinstance(arr, pa.TimestampArray)
     assert arr.type.unit == "s"
     assert arr.type.tz == "America/New_York"
+    return arr
+
+
+def duration_array() -> pa.Array:
+    arr = pa.DurationArray.from_pandas(
+        [
+            pd.Timedelta("2d"),
+            pd.Timedelta("1d"),
+            pd.Timedelta("1w"),
+        ]
+    )
+
+    assert isinstance(arr, pa.DurationArray)
+    assert arr.type.unit == "us"
     return arr
 
 
@@ -227,6 +242,7 @@ def table() -> pa.Table:
             "nullable_int": nullable_int(),
             "sparse_union": sparse_union_array(),
             "dense_union": dense_union_array(),
+            "duration": duration_array(),
         }
     )
 

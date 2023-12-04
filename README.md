@@ -139,7 +139,7 @@ Most of the unsupported types should be pretty straightforward to implement; the
 - [x] Time32
 - [x] Time64
 - [x] Timestamp (with timezone)
-- [ ] Duration
+- [x] Duration
 - [ ] Interval
 
 ### Nested Types

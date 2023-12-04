@@ -252,6 +252,31 @@ export function parseData<T extends DataType>(
     });
   }
 
+  if (DataType.isDuration(dataType)) {
+    const [validityPtr, dataPtr] = bufferPtrs;
+    const nullBitmap = parseNullBitmap(
+      dataView.buffer,
+      validityPtr,
+      length,
+      copy,
+    );
+
+    let byteWidth = getTimeByteWidth(dataType);
+    const data = copy
+      ? new dataType.ArrayType(
+          copyBuffer(dataView.buffer, dataPtr, length * byteWidth),
+        )
+      : new dataType.ArrayType(dataView.buffer, dataPtr, length);
+    return arrow.makeData({
+      type: dataType,
+      offset,
+      length,
+      nullCount,
+      data,
+      nullBitmap,
+    });
+  }
+
   if (DataType.isInterval(dataType)) {
     const [validityPtr, dataPtr] = bufferPtrs;
     const nullBitmap = parseNullBitmap(
@@ -642,7 +667,9 @@ function getDateByteWidth(type: arrow.Date_): number {
   assertUnreachable();
 }
 
-function getTimeByteWidth(type: arrow.Time | arrow.Timestamp): number {
+function getTimeByteWidth(
+  type: arrow.Time | arrow.Timestamp | arrow.Duration,
+): number {
   switch (type.unit) {
     case arrow.TimeUnit.SECOND:
     case arrow.TimeUnit.MILLISECOND:
