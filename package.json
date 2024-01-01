@@ -44,7 +44,7 @@
     "rust-arrow-ffi": "link:./tests/rust-arrow-ffi/pkg/",
     "ts-node": "^10.9.1",
     "typescript": "^5.2.2",
-    "vitest": "^0.34.6"
+    "vitest": "^1.1.1"
   },
   "volta": {
     "node": "20.9.0",
