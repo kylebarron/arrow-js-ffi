@@ -1,6 +1,6 @@
 import * as arrow from "apache-arrow";
 import { DataType } from "apache-arrow";
-import { LargeList, isLargeBinary, isLargeList, isLargeUtf8 } from "./types";
+import { LargeList, isLargeList } from "./types";
 
 type NullBitmap = Uint8Array | null | undefined;
 
@@ -340,7 +340,7 @@ export function parseData<T extends DataType>(
     });
   }
 
-  if (isLargeBinary(dataType)) {
+  if (DataType.isLargeBinary(dataType)) {
     const [validityPtr, offsetsPtr, dataPtr] = bufferPtrs;
     const nullBitmap = parseNullBitmap(
       dataView.buffer,
@@ -420,7 +420,7 @@ export function parseData<T extends DataType>(
     });
   }
 
-  if (isLargeUtf8(dataType)) {
+  if (DataType.isLargeUtf8(dataType)) {
     const [validityPtr, offsetsPtr, dataPtr] = bufferPtrs;
     const nullBitmap = parseNullBitmap(
       dataView.buffer,

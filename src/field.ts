@@ -2,7 +2,7 @@
 
 import * as arrow from "apache-arrow";
 import { assert } from "./vector";
-import { LargeBinary, LargeList, LargeUtf8 } from "./types";
+import { LargeList } from "./types";
 
 interface Flags {
   nullable: boolean;
@@ -27,9 +27,9 @@ const formatMapping: Record<string, arrow.DataType | undefined> = {
   f: new arrow.Float32(),
   g: new arrow.Float64(),
   z: new arrow.Binary(),
-  Z: new LargeBinary(),
+  Z: new arrow.LargeBinary(),
   u: new arrow.Utf8(),
-  U: new LargeUtf8(),
+  U: new arrow.LargeUtf8(),
   tdD: new arrow.DateDay(),
   tdm: new arrow.DateMillisecond(),
   tts: new arrow.TimeSecond(),
