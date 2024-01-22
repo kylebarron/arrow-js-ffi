@@ -32,12 +32,12 @@
     "src/"
   ],
   "peerDependencies": {
-    "apache-arrow": ">=14"
+    "apache-arrow": ">=15"
   },
   "devDependencies": {
     "@rollup/plugin-terser": "^0.4.3",
     "@rollup/plugin-typescript": "^11.1.2",
-    "apache-arrow": "^14",
+    "apache-arrow": "^15",
     "prettier": "^3.1.0",
     "rollup": "^4.1.5",
     "rollup-plugin-dts": "^6.1.0",
