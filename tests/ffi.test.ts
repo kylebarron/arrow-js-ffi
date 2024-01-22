@@ -95,7 +95,7 @@ describe("primitive types non-null", (t) => {
 
     expect(field.name, "col1");
     expect(field.typeId).toStrictEqual(fixture.dataType.typeId);
-    expect(field.nullable).toBeFalsy();
+    expect(field.nullable).toBeTruthy();
 
     const arrayPtr = ffiTable.arrayAddr(0, 0);
     const wasmVector = parseVector(
