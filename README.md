@@ -99,6 +99,29 @@ const viewedRecordBatch = parseRecordBatch(
 );
 ```
 
+### `parseTable`
+
+Parse an Arrow Table object from WebAssembly memory to an Arrow JS `Table`.
+
+This expects an array of [`ArrowArray`](https://arrow.apache.org/docs/format/CDataInterface.html#the-arrowarray-structure) C FFI structs _plus_ an [`ArrowSchema`](https://arrow.apache.org/docs/format/CDataInterface.html#the-arrowschema-structure) C FFI struct. Note that the underlying array and field pointers **must** be a `Struct` type. In essence a `Struct` array is used to mimic each `RecordBatch` while only being one array.
+
+- `buffer` (`ArrayBuffer`): The [`WebAssembly.Memory`](https://developer.mozilla.org/en-US/docs/WebAssembly/JavaScript_interface/Memory) instance to read from.
+- `arrayPtrs` (`number[]`): An array of numeric pointers describing the location in `buffer` where the _array_ C struct is located that represents each record batch.
+- `schemaPtr` (`number`): The numeric pointer in `buffer` where the _field_ C struct is located.
+- `copy` (`boolean`, default: `true`): If `true`, will _copy_ data across the Wasm boundary, allowing you to delete the copy on the Wasm side. If `false`, the resulting `arrow.Vector` objects will be _views_ on Wasm memory. This requires careful usage as the arrays will become invalid if the memory region in Wasm changes.
+
+#### Example
+
+```ts
+const WASM_MEMORY: WebAssembly.Memory = ...
+const table = parseRecordBatch(
+    WASM_MEMORY.buffer,
+    arrayPtrs,
+    schemaPtr,
+    true
+);
+```
+
 ## Type Support
 
 Most of the unsupported types should be pretty straightforward to implement; they just need some testing.
