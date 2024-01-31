@@ -4,6 +4,7 @@ from decimal import Decimal
 import numpy as np
 import pandas as pd
 import pyarrow as pa
+import pyarrow.compute as pc
 import pyarrow.feather as feather
 
 
@@ -194,6 +195,16 @@ def dense_union_array() -> pa.Array:
     return union_arr
 
 
+def dictionary_encoded_string_array() -> pa.DictionaryArray:
+    arr = pa.StringArray.from_pandas(["a", "a", "b"])
+    return pc.dictionary_encode(arr)
+
+
+def dictionary_encoded_string_array_null() -> pa.DictionaryArray:
+    arr = pa.StringArray.from_pandas(["a", "a", None])
+    return pc.dictionary_encode(arr)
+
+
 class MyExtensionType(pa.ExtensionType):
     """
     Refer to https://arrow.apache.org/docs/python/extending_types.html for
@@ -243,6 +254,8 @@ def table() -> pa.Table:
             "sparse_union": sparse_union_array(),
             "dense_union": dense_union_array(),
             "duration": duration_array(),
+            "dictionary_encoded_string": dictionary_encoded_string_array(),
+            "dictionary_encoded_string_null": dictionary_encoded_string_array_null(),
         }
     )
 

@@ -63,6 +63,8 @@ export function parseField(buffer: ArrayBuffer, ptr: number): arrow.Field {
   const nChildren = dataView.getBigInt64(ptr + 24, true);
 
   const ptrToChildrenPtrs = dataView.getUint32(ptr + 32, true);
+  const dictionaryPtr = dataView.getUint32(ptr + 36, true);
+
   const childrenFields: arrow.Field[] = new Array(Number(nChildren));
   for (let i = 0; i < nChildren; i++) {
     childrenFields[i] = parseField(
@@ -71,6 +73,46 @@ export function parseField(buffer: ArrayBuffer, ptr: number): arrow.Field {
     );
   }
 
+  const field = parseFieldContent({
+    formatString,
+    flags,
+    name,
+    childrenFields,
+    metadata,
+  });
+
+  if (dictionaryPtr !== 0) {
+    const dictionaryValuesField = parseField(buffer, dictionaryPtr);
+    const dictionaryType = new arrow.Dictionary(
+      dictionaryValuesField,
+      field.type,
+      null,
+      flags.dictionaryOrdered,
+    );
+    return new arrow.Field(
+      field.name,
+      dictionaryType,
+      flags.nullable,
+      metadata,
+    );
+  }
+
+  return field;
+}
+
+function parseFieldContent({
+  formatString,
+  flags,
+  name,
+  childrenFields,
+  metadata,
+}: {
+  formatString: string;
+  flags: Flags;
+  name: string;
+  childrenFields: arrow.Field[];
+  metadata: Map<string, string> | null;
+}): arrow.Field {
   const primitiveType = formatMapping[formatString];
   if (primitiveType) {
     return new arrow.Field(name, primitiveType, flags.nullable, metadata);

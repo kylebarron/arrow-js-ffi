@@ -69,6 +69,8 @@ export function parseData<T extends DataType>(
   }
 
   const ptrToChildrenPtrs = dataView.getUint32(ptr + 44, true);
+  const dictionaryPtr = dataView.getUint32(ptr + 48, true);
+
   const children: arrow.Data[] = new Array(Number(nChildren));
   for (let i = 0; i < nChildren; i++) {
     children[i] = parseData(
@@ -79,6 +81,77 @@ export function parseData<T extends DataType>(
     );
   }
 
+  // Special case for handling dictionary-encoded arrays
+  if (dictionaryPtr !== 0) {
+    const dictionaryType = dataType as unknown as arrow.Dictionary;
+
+    // the parent structure points to the index data, the ArrowArray.dictionary
+    // points to the dictionary values array.
+    const indicesType = dictionaryType.indices;
+    const dictionaryIndices = parseDataContent({
+      dataType: indicesType,
+      dataView,
+      copy,
+      length,
+      nullCount,
+      offset,
+      nChildren,
+      children,
+      bufferPtrs,
+    });
+
+    const valueType = dictionaryType.dictionary.type;
+    const dictionaryValues = parseData(buffer, dictionaryPtr, valueType, copy);
+
+    // @ts-expect-error we're casting to dictionary type
+    return arrow.makeData({
+      type: dictionaryType,
+      // TODO: double check that this offset should be set on both the values
+      // and indices of the dictionary array
+      offset,
+      length,
+      nullCount,
+      nullBitmap: dictionaryIndices.nullBitmap,
+      // Note: Here we need to pass in the _raw TypedArray_ not a Data instance
+      data: dictionaryIndices.values,
+      dictionary: arrow.makeVector(dictionaryValues),
+    });
+  } else {
+    return parseDataContent({
+      dataType,
+      dataView,
+      copy,
+      length,
+      nullCount,
+      offset,
+      nChildren,
+      children,
+      bufferPtrs,
+    });
+  }
+}
+
+function parseDataContent<T extends DataType>({
+  dataType,
+  dataView,
+  copy,
+  length,
+  nullCount,
+  offset,
+  nChildren,
+  children,
+  bufferPtrs,
+}: {
+  dataType: T;
+  dataView: DataView;
+  copy: boolean;
+  length: number;
+  nullCount: number;
+  offset: number;
+  nChildren: number;
+  children: arrow.Data[];
+  bufferPtrs: Uint32Array;
+}): arrow.Data<T> {
   if (DataType.isNull(dataType)) {
     return arrow.makeData({
       type: dataType,
@@ -653,7 +726,6 @@ export function parseData<T extends DataType>(
     });
   }
 
-  // TODO: map arrays, dictionary encoding
   throw new Error(`Unsupported type ${dataType}`);
 }
 
