@@ -24,7 +24,7 @@ export function parseVector<T extends DataType>(
   buffer: ArrayBuffer,
   ptr: number,
   dataType: T,
-  copy: boolean = true
+  copy: boolean = true,
 ): arrow.Vector<T> {
   const data = parseData(buffer, ptr, dataType, copy);
   return arrow.makeVector(data);
@@ -51,7 +51,7 @@ export function parseData<T extends DataType>(
   buffer: ArrayBuffer,
   ptr: number,
   dataType: T,
-  copy: boolean = true
+  copy: boolean = true,
 ): arrow.Data<T> {
   const dataView = new DataView(buffer);
 
@@ -77,7 +77,7 @@ export function parseData<T extends DataType>(
       buffer,
       dataView.getUint32(ptrToChildrenPtrs + i * 4, true),
       dataType.children[i].type,
-      copy
+      copy,
     );
   }
 
@@ -166,7 +166,7 @@ function parseDataContent<T extends DataType>({
       dataView.buffer,
       validityPtr,
       length,
-      copy
+      copy,
     );
     const byteLength = (length * dataType.bitWidth) / 8;
     const data = copy
@@ -188,7 +188,7 @@ function parseDataContent<T extends DataType>({
       dataView.buffer,
       validityPtr,
       length,
-      copy
+      copy,
     );
     // bitwidth doesn't exist on float types I guess
     const byteLength = length * dataType.ArrayType.BYTES_PER_ELEMENT;
@@ -211,7 +211,7 @@ function parseDataContent<T extends DataType>({
       dataView.buffer,
       validityPtr,
       length,
-      copy
+      copy,
     );
 
     // Boolean arrays are bit-packed. This means the byte length should be the number of elements,
@@ -237,7 +237,7 @@ function parseDataContent<T extends DataType>({
       dataView.buffer,
       validityPtr,
       length,
-      copy
+      copy,
     );
     const byteLength = (length * dataType.bitWidth) / 8;
     const data = copy
@@ -259,13 +259,13 @@ function parseDataContent<T extends DataType>({
       dataView.buffer,
       validityPtr,
       length,
-      copy
+      copy,
     );
 
     let byteWidth = getDateByteWidth(dataType);
     const data = copy
       ? new dataType.ArrayType(
-          copyBuffer(dataView.buffer, dataPtr, length * byteWidth)
+          copyBuffer(dataView.buffer, dataPtr, length * byteWidth),
         )
       : new dataType.ArrayType(dataView.buffer, dataPtr, length);
     return arrow.makeData({
@@ -284,7 +284,7 @@ function parseDataContent<T extends DataType>({
       dataView.buffer,
       validityPtr,
       length,
-      copy
+      copy,
     );
     const byteLength = (length * dataType.bitWidth) / 8;
     const data = copy
@@ -306,13 +306,13 @@ function parseDataContent<T extends DataType>({
       dataView.buffer,
       validityPtr,
       length,
-      copy
+      copy,
     );
 
     let byteWidth = getTimeByteWidth(dataType);
     const data = copy
       ? new dataType.ArrayType(
-          copyBuffer(dataView.buffer, dataPtr, length * byteWidth)
+          copyBuffer(dataView.buffer, dataPtr, length * byteWidth),
         )
       : new dataType.ArrayType(dataView.buffer, dataPtr, length);
     return arrow.makeData({
@@ -331,13 +331,13 @@ function parseDataContent<T extends DataType>({
       dataView.buffer,
       validityPtr,
       length,
-      copy
+      copy,
     );
 
     let byteWidth = getTimeByteWidth(dataType);
     const data = copy
       ? new dataType.ArrayType(
-          copyBuffer(dataView.buffer, dataPtr, length * byteWidth)
+          copyBuffer(dataView.buffer, dataPtr, length * byteWidth),
         )
       : new dataType.ArrayType(dataView.buffer, dataPtr, length);
     return arrow.makeData({
@@ -356,7 +356,7 @@ function parseDataContent<T extends DataType>({
       dataView.buffer,
       validityPtr,
       length,
-      copy
+      copy,
     );
 
     // What's the bitwidth here?
@@ -382,7 +382,7 @@ function parseDataContent<T extends DataType>({
       dataView.buffer,
       validityPtr,
       length,
-      copy
+      copy,
     );
 
     const valueOffsets = copy
@@ -390,8 +390,8 @@ function parseDataContent<T extends DataType>({
           copyBuffer(
             dataView.buffer,
             offsetsPtr,
-            (length + 1) * Int32Array.BYTES_PER_ELEMENT
-          )
+            (length + 1) * Int32Array.BYTES_PER_ELEMENT,
+          ),
         )
       : new Int32Array(dataView.buffer, offsetsPtr, length + 1);
 
@@ -419,14 +419,14 @@ function parseDataContent<T extends DataType>({
       dataView.buffer,
       validityPtr,
       length,
-      copy
+      copy,
     );
 
     // The original value offsets are an Int64Array, which Arrow JS does not yet support natively
     const originalValueOffsets = new BigInt64Array(
       dataView.buffer,
       offsetsPtr,
-      length + 1
+      length + 1,
     );
 
     // Copy the Int64Array to an Int32Array
@@ -462,7 +462,7 @@ function parseDataContent<T extends DataType>({
       dataView.buffer,
       validityPtr,
       length,
-      copy
+      copy,
     );
 
     const valueOffsets = copy
@@ -470,8 +470,8 @@ function parseDataContent<T extends DataType>({
           copyBuffer(
             dataView.buffer,
             offsetsPtr,
-            (length + 1) * Int32Array.BYTES_PER_ELEMENT
-          )
+            (length + 1) * Int32Array.BYTES_PER_ELEMENT,
+          ),
         )
       : new Int32Array(dataView.buffer, offsetsPtr, length + 1);
 
@@ -499,14 +499,14 @@ function parseDataContent<T extends DataType>({
       dataView.buffer,
       validityPtr,
       length,
-      copy
+      copy,
     );
 
     // The original value offsets are an Int64Array, which Arrow JS does not yet support natively
     const originalValueOffsets = new BigInt64Array(
       dataView.buffer,
       offsetsPtr,
-      length + 1
+      length + 1,
     );
 
     // Copy the Int64Array to an Int32Array
@@ -542,16 +542,16 @@ function parseDataContent<T extends DataType>({
       dataView.buffer,
       validityPtr,
       length,
-      copy
+      copy,
     );
     const data = copy
       ? new dataType.ArrayType(
-          copyBuffer(dataView.buffer, dataPtr, length * dataType.byteWidth)
+          copyBuffer(dataView.buffer, dataPtr, length * dataType.byteWidth),
         )
       : new dataType.ArrayType(
           dataView.buffer,
           dataPtr,
-          length * dataType.byteWidth
+          length * dataType.byteWidth,
         );
     return arrow.makeData({
       type: dataType,
@@ -570,15 +570,15 @@ function parseDataContent<T extends DataType>({
       dataView.buffer,
       validityPtr,
       length,
-      copy
+      copy,
     );
     const valueOffsets = copy
       ? new Int32Array(
           copyBuffer(
             dataView.buffer,
             offsetsPtr,
-            (length + 1) * Int32Array.BYTES_PER_ELEMENT
-          )
+            (length + 1) * Int32Array.BYTES_PER_ELEMENT,
+          ),
         )
       : new Int32Array(dataView.buffer, offsetsPtr, length + 1);
 
@@ -601,14 +601,14 @@ function parseDataContent<T extends DataType>({
       dataView.buffer,
       validityPtr,
       length,
-      copy
+      copy,
     );
 
     // The original value offsets are an Int64Array, which Arrow JS does not yet support natively
     const originalValueOffsets = new BigInt64Array(
       dataView.buffer,
       offsetsPtr,
-      length + 1
+      length + 1,
     );
 
     // Copy the Int64Array to an Int32Array
@@ -637,7 +637,7 @@ function parseDataContent<T extends DataType>({
       dataView.buffer,
       validityPtr,
       length,
-      copy
+      copy,
     );
 
     return arrow.makeData({
@@ -656,7 +656,7 @@ function parseDataContent<T extends DataType>({
       dataView.buffer,
       validityPtr,
       length,
-      copy
+      copy,
     );
 
     return arrow.makeData({
@@ -676,15 +676,15 @@ function parseDataContent<T extends DataType>({
       dataView.buffer,
       validityPtr,
       length,
-      copy
+      copy,
     );
     const valueOffsets = copy
       ? new Int32Array(
           copyBuffer(
             dataView.buffer,
             offsetsPtr,
-            (length + 1) * Int32Array.BYTES_PER_ELEMENT
-          )
+            (length + 1) * Int32Array.BYTES_PER_ELEMENT,
+          ),
         )
       : new Int32Array(dataView.buffer, offsetsPtr, length + 1);
 
@@ -707,8 +707,8 @@ function parseDataContent<T extends DataType>({
           copyBuffer(
             dataView.buffer,
             offsetsPtr,
-            (length + 1) * Int32Array.BYTES_PER_ELEMENT
-          )
+            (length + 1) * Int32Array.BYTES_PER_ELEMENT,
+          ),
         )
       : new Int32Array(dataView.buffer, offsetsPtr, length + 1);
 
@@ -717,8 +717,8 @@ function parseDataContent<T extends DataType>({
           copyBuffer(
             dataView.buffer,
             typeIdsPtr,
-            (length + 1) * Int8Array.BYTES_PER_ELEMENT
-          )
+            (length + 1) * Int8Array.BYTES_PER_ELEMENT,
+          ),
         )
       : new Int8Array(dataView.buffer, typeIdsPtr, length + 1);
 
@@ -741,8 +741,8 @@ function parseDataContent<T extends DataType>({
           copyBuffer(
             dataView.buffer,
             typeIdsPtr,
-            (length + 1) * Int8Array.BYTES_PER_ELEMENT
-          )
+            (length + 1) * Int8Array.BYTES_PER_ELEMENT,
+          ),
         )
       : new Int8Array(dataView.buffer, typeIdsPtr, length + 1);
 
@@ -770,7 +770,7 @@ function getDateByteWidth(type: arrow.Date_): number {
 }
 
 function getTimeByteWidth(
-  type: arrow.Time | arrow.Timestamp | arrow.Duration
+  type: arrow.Time | arrow.Timestamp | arrow.Duration,
 ): number {
   switch (type.unit) {
     case arrow.TimeUnit.SECOND:
@@ -787,7 +787,7 @@ function parseNullBitmap(
   buffer: ArrayBuffer,
   validityPtr: number,
   length: number,
-  copy: boolean
+  copy: boolean,
 ): NullBitmap {
   if (validityPtr === 0) {
     return null;
@@ -807,7 +807,7 @@ function parseNullBitmap(
 function copyBuffer(
   buffer: ArrayBuffer,
   ptr: number,
-  byteLength: number
+  byteLength: number,
 ): ArrayBuffer {
   const newBuffer = new ArrayBuffer(byteLength);
   const newBufferView = new Uint8Array(newBuffer);
