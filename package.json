@@ -21,10 +21,12 @@
   "type": "module",
   "scripts": {
     "build": "rollup -c rollup.config.js",
+    "clean": "rimraf dist",
     "fmt:check": "prettier './src/**/*.ts' --check",
     "fmt": "prettier './src/**/*.ts' --write",
     "test": "vitest run",
     "typecheck": "tsc --build",
+    "prepublishOnly": "yarn clean && yarn build",
     "watch": "tsc --watch --declaration"
   },
   "files": [
@@ -39,6 +41,7 @@
     "@rollup/plugin-typescript": "^11.1.2",
     "apache-arrow": "^15",
     "prettier": "^3.1.0",
+    "rimraf": "^5.0.5",
     "rollup": "^4.1.5",
     "rollup-plugin-dts": "^6.1.0",
     "rust-arrow-ffi": "link:./tests/rust-arrow-ffi/pkg/",
