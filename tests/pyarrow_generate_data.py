@@ -140,6 +140,15 @@ def nullable_int() -> pa.Array:
     return arr
 
 
+def map_array() -> pa.Array:
+    offsets = [0, 2, 3, 4]
+    keys = ["a", "b", "a", "b"]
+    items = [1, 2, 3, 4]
+    arr = pa.MapArray.from_arrays(offsets, keys, items)
+    assert isinstance(arr, pa.MapArray)
+    return arr
+
+
 def sparse_union_array() -> pa.Array:
     """Generate a sparse union array
 
@@ -251,6 +260,9 @@ def table() -> pa.Table:
             "date64": date64_array(),
             "timestamp": timestamp_array(),
             "nullable_int": nullable_int(),
+            # We don't yet include "map" in tests because of issues on the Rust side.
+            # ref: https://github.com/kylebarron/arrow-js-ffi/issues/97
+            # "map": map_array(),
             "sparse_union": sparse_union_array(),
             "dense_union": dense_union_array(),
             "duration": duration_array(),

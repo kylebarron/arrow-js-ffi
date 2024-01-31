@@ -173,7 +173,7 @@ Most of the unsupported types should be pretty straightforward to implement; the
 - [x] Large List (Not implemented by Arrow JS but supported by downcasting to `List`.)
 - [x] Fixed-size List
 - [x] Struct
-- [ ] Map
+- [x] Map (though not yet tested, see [#97](https://github.com/kylebarron/arrow-js-ffi/issues/97))
 - [x] Dense Union
 - [x] Sparse Union
 - [x] Dictionary-encoded arrays

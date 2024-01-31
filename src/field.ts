@@ -222,6 +222,13 @@ function parseFieldContent({
     return new arrow.Field(name, type, flags.nullable, metadata);
   }
 
+  // Map
+  if (formatString === "+m") {
+    assert(childrenFields.length === 1);
+    const type = new arrow.Map_(childrenFields[0], flags.mapKeysSorted);
+    return new arrow.Field(name, type, flags.nullable, metadata);
+  }
+
   // Dense union
   if (formatString.slice(0, 4) === "+ud:") {
     const typeIds = formatString.slice(4).split(",").map(Number);

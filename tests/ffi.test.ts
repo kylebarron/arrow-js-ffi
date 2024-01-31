@@ -683,6 +683,45 @@ describe("nullable int", (t) => {
   it("copy=true", () => test(true));
 });
 
+// Skipping this test because of rust issues
+// ref: https://github.com/kylebarron/arrow-js-ffi/issues/97
+describe.skip("map array", (t) => {
+  function test(copy: boolean) {
+    let columnIndex = TEST_TABLE.schema.fields.findIndex(
+      (field) => field.name == "map_array"
+    );
+
+    const originalField = TEST_TABLE.schema.fields[columnIndex];
+    // declare it's not null
+    const originalVector = TEST_TABLE.getChildAt(columnIndex) as arrow.Vector;
+    const fieldPtr = FFI_TABLE.schemaAddr(columnIndex);
+    const field = parseField(WASM_MEMORY.buffer, fieldPtr);
+
+    expect(field.name).toStrictEqual(originalField.name);
+    expect(field.typeId).toStrictEqual(originalField.typeId);
+    expect(field.nullable).toStrictEqual(originalField.nullable);
+
+    const arrayPtr = FFI_TABLE.arrayAddr(0, columnIndex);
+    const wasmVector = parseVector(
+      WASM_MEMORY.buffer,
+      arrayPtr,
+      field.type,
+      copy
+    );
+
+    console.log(originalVector);
+    console.log(wasmVector);
+
+    // expect(
+    //   validityEqual(originalVector, wasmVector),
+    //   "validity should be equal"
+    // ).toBeTruthy();
+  }
+
+  it("copy=false", () => test(false));
+  it("copy=true", () => test(true));
+});
+
 describe("dictionary encoded string", (t) => {
   function test(copy: boolean) {
     let columnIndex = TEST_TABLE.schema.fields.findIndex(
