@@ -2,7 +2,9 @@ from datetime import date, datetime
 from decimal import Decimal
 
 import numpy as np
+import pandas as pd
 import pyarrow as pa
+import pyarrow.compute as pc
 import pyarrow.feather as feather
 
 
@@ -115,6 +117,20 @@ def timestamp_array() -> pa.Array:
     return arr
 
 
+def duration_array() -> pa.Array:
+    arr = pa.DurationArray.from_pandas(
+        [
+            pd.Timedelta("2d"),
+            pd.Timedelta("1d"),
+            pd.Timedelta("1w"),
+        ]
+    )
+
+    assert isinstance(arr, pa.DurationArray)
+    assert arr.type.unit == "us"
+    return arr
+
+
 def nullable_int() -> pa.Array:
     # True means null
     mask = [True, False, True]
@@ -131,6 +147,71 @@ def map_array() -> pa.Array:
     arr = pa.MapArray.from_arrays(offsets, keys, items)
     assert isinstance(arr, pa.MapArray)
     return arr
+
+
+def sparse_union_array() -> pa.Array:
+    """Generate a sparse union array
+
+    This is derived from the example here https://arrow.apache.org/docs/python/data#union-arrays
+    """
+    # First child array
+    xs = pa.array([5, 6, 7])
+
+    # Second child array
+    ys = pa.array([False, False, True])
+
+    # Type mapping
+    types = pa.array([0, 1, 1], type=pa.int8())
+
+    # Union array
+    union_arr = pa.UnionArray.from_sparse(types, [xs, ys])
+
+    assert isinstance(union_arr, pa.UnionArray)
+    assert isinstance(union_arr.type, pa.SparseUnionType)
+    assert union_arr[0].as_py() == 5
+    assert union_arr[1].as_py() is False
+    assert union_arr[2].as_py() is True
+
+    return union_arr
+
+
+def dense_union_array() -> pa.Array:
+    """Generate a dense union array
+
+    This is derived from the example here https://arrow.apache.org/docs/python/data#union-arrays
+    """
+    # First child array
+    xs = pa.array([5])
+
+    # Second child array
+    ys = pa.array([False, True])
+
+    # Type mapping
+    types = pa.array([0, 1, 1], type=pa.int8())
+
+    # Offsets array
+    offsets = pa.array([0, 0, 1], type=pa.int32())
+
+    # Union array
+    union_arr = pa.UnionArray.from_dense(types, offsets, [xs, ys])
+
+    assert isinstance(union_arr, pa.UnionArray)
+    assert isinstance(union_arr.type, pa.DenseUnionType)
+    assert union_arr[0].as_py() == 5
+    assert union_arr[1].as_py() is False
+    assert union_arr[2].as_py() is True
+
+    return union_arr
+
+
+def dictionary_encoded_string_array() -> pa.DictionaryArray:
+    arr = pa.StringArray.from_pandas(["a", "a", "b"])
+    return pc.dictionary_encode(arr)
+
+
+def dictionary_encoded_string_array_null() -> pa.DictionaryArray:
+    arr = pa.StringArray.from_pandas(["a", "a", None])
+    return pc.dictionary_encode(arr)
 
 
 class MyExtensionType(pa.ExtensionType):
@@ -179,7 +260,14 @@ def table() -> pa.Table:
             "date64": date64_array(),
             "timestamp": timestamp_array(),
             "nullable_int": nullable_int(),
-            "map": map_array(),
+            # We don't yet include "map" in tests because of issues on the Rust side.
+            # ref: https://github.com/kylebarron/arrow-js-ffi/issues/97
+            # "map": map_array(),
+            "sparse_union": sparse_union_array(),
+            "dense_union": dense_union_array(),
+            "duration": duration_array(),
+            "dictionary_encoded_string": dictionary_encoded_string_array(),
+            "dictionary_encoded_string_null": dictionary_encoded_string_array_null(),
         }
     )
 

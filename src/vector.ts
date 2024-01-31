@@ -1,6 +1,6 @@
 import * as arrow from "apache-arrow";
 import { DataType } from "apache-arrow";
-import { LargeList, isLargeBinary, isLargeList, isLargeUtf8 } from "./types";
+import { LargeList, isLargeList } from "./types";
 
 type NullBitmap = Uint8Array | null | undefined;
 
@@ -10,23 +10,48 @@ Parse an [`ArrowArray`](https://arrow.apache.org/docs/format/CDataInterface.html
 - `buffer` (`ArrayBuffer`): The [`WebAssembly.Memory`](https://developer.mozilla.org/en-US/docs/WebAssembly/JavaScript_interface/Memory) instance to read from.
 - `ptr` (`number`): The numeric pointer in `buffer` where the C struct is located.
 - `dataType` (`arrow.DataType`): The type of the vector to parse. This is retrieved from `field.type` on the result of `parseField`.
-- `copy` (`boolean`): If `true`, will _copy_ data across the Wasm boundary, allowing you to delete the copy on the Wasm side. If `false`, the resulting `arrow.Vector` objects will be _views_ on Wasm memory. This requires careful usage as the arrays will become invalid if the memory region in Wasm changes.
+- `copy` (`boolean`, default: `true`): If `true`, will _copy_ data across the Wasm boundary, allowing you to delete the copy on the Wasm side. If `false`, the resulting `arrow.Vector` objects will be _views_ on Wasm memory. This requires careful usage as the arrays will become invalid if the memory region in Wasm changes.
+
+#### Example
+
+```ts
+const WASM_MEMORY: WebAssembly.Memory = ...
+const copiedVector = parseVector(WASM_MEMORY.buffer, arrayPtr, field.type);
+// Make zero-copy views instead of copying array contents
+const viewedVector = parseVector(WASM_MEMORY.buffer, arrayPtr, field.type, false);
  */
 export function parseVector<T extends DataType>(
   buffer: ArrayBuffer,
   ptr: number,
   dataType: T,
-  copy: boolean = false
+  copy: boolean = true
 ): arrow.Vector<T> {
   const data = parseData(buffer, ptr, dataType, copy);
   return arrow.makeVector(data);
 }
 
+/**
+Parse an [`ArrowArray`](https://arrow.apache.org/docs/format/CDataInterface.html#the-arrowarray-structure) C FFI struct into an [`arrow.Data`](https://arrow.apache.org/docs/js/classes/Arrow_dom.Data.html) instance. Multiple `Data` instances can be joined to make an [`arrow.Vector`](https://arrow.apache.org/docs/js/classes/Arrow_dom.Vector.html).
+
+- `buffer` (`ArrayBuffer`): The [`WebAssembly.Memory`](https://developer.mozilla.org/en-US/docs/WebAssembly/JavaScript_interface/Memory) instance to read from.
+- `ptr` (`number`): The numeric pointer in `buffer` where the C struct is located.
+- `dataType` (`arrow.DataType`): The type of the vector to parse. This is retrieved from `field.type` on the result of `parseField`.
+- `copy` (`boolean`, default: `true`): If `true`, will _copy_ data across the Wasm boundary, allowing you to delete the copy on the Wasm side. If `false`, the resulting `arrow.Data` objects will be _views_ on Wasm memory. This requires careful usage as the arrays will become invalid if the memory region in Wasm changes.
+
+#### Example
+
+```ts
+const WASM_MEMORY: WebAssembly.Memory = ...
+const copiedData = parseData(WASM_MEMORY.buffer, arrayPtr, field.type);
+// Make zero-copy views instead of copying array contents
+const viewedData = parseData(WASM_MEMORY.buffer, arrayPtr, field.type, false);
+```
+ */
 export function parseData<T extends DataType>(
   buffer: ArrayBuffer,
   ptr: number,
   dataType: T,
-  copy: boolean = false
+  copy: boolean = true
 ): arrow.Data<T> {
   const dataView = new DataView(buffer);
 
@@ -44,6 +69,8 @@ export function parseData<T extends DataType>(
   }
 
   const ptrToChildrenPtrs = dataView.getUint32(ptr + 44, true);
+  const dictionaryPtr = dataView.getUint32(ptr + 48, true);
+
   const children: arrow.Data[] = new Array(Number(nChildren));
   for (let i = 0; i < nChildren; i++) {
     children[i] = parseData(
@@ -54,6 +81,77 @@ export function parseData<T extends DataType>(
     );
   }
 
+  // Special case for handling dictionary-encoded arrays
+  if (dictionaryPtr !== 0) {
+    const dictionaryType = dataType as unknown as arrow.Dictionary;
+
+    // the parent structure points to the index data, the ArrowArray.dictionary
+    // points to the dictionary values array.
+    const indicesType = dictionaryType.indices;
+    const dictionaryIndices = parseDataContent({
+      dataType: indicesType,
+      dataView,
+      copy,
+      length,
+      nullCount,
+      offset,
+      nChildren,
+      children,
+      bufferPtrs,
+    });
+
+    const valueType = dictionaryType.dictionary.type;
+    const dictionaryValues = parseData(buffer, dictionaryPtr, valueType, copy);
+
+    // @ts-expect-error we're casting to dictionary type
+    return arrow.makeData({
+      type: dictionaryType,
+      // TODO: double check that this offset should be set on both the values
+      // and indices of the dictionary array
+      offset,
+      length,
+      nullCount,
+      nullBitmap: dictionaryIndices.nullBitmap,
+      // Note: Here we need to pass in the _raw TypedArray_ not a Data instance
+      data: dictionaryIndices.values,
+      dictionary: arrow.makeVector(dictionaryValues),
+    });
+  } else {
+    return parseDataContent({
+      dataType,
+      dataView,
+      copy,
+      length,
+      nullCount,
+      offset,
+      nChildren,
+      children,
+      bufferPtrs,
+    });
+  }
+}
+
+function parseDataContent<T extends DataType>({
+  dataType,
+  dataView,
+  copy,
+  length,
+  nullCount,
+  offset,
+  nChildren,
+  children,
+  bufferPtrs,
+}: {
+  dataType: T;
+  dataView: DataView;
+  copy: boolean;
+  length: number;
+  nullCount: number;
+  offset: number;
+  nChildren: number;
+  children: arrow.Data[];
+  bufferPtrs: Uint32Array;
+}): arrow.Data<T> {
   if (DataType.isNull(dataType)) {
     return arrow.makeData({
       type: dataType,
@@ -227,6 +325,31 @@ export function parseData<T extends DataType>(
     });
   }
 
+  if (DataType.isDuration(dataType)) {
+    const [validityPtr, dataPtr] = bufferPtrs;
+    const nullBitmap = parseNullBitmap(
+      dataView.buffer,
+      validityPtr,
+      length,
+      copy
+    );
+
+    let byteWidth = getTimeByteWidth(dataType);
+    const data = copy
+      ? new dataType.ArrayType(
+          copyBuffer(dataView.buffer, dataPtr, length * byteWidth)
+        )
+      : new dataType.ArrayType(dataView.buffer, dataPtr, length);
+    return arrow.makeData({
+      type: dataType,
+      offset,
+      length,
+      nullCount,
+      data,
+      nullBitmap,
+    });
+  }
+
   if (DataType.isInterval(dataType)) {
     const [validityPtr, dataPtr] = bufferPtrs;
     const nullBitmap = parseNullBitmap(
@@ -290,7 +413,7 @@ export function parseData<T extends DataType>(
     });
   }
 
-  if (isLargeBinary(dataType)) {
+  if (DataType.isLargeBinary(dataType)) {
     const [validityPtr, offsetsPtr, dataPtr] = bufferPtrs;
     const nullBitmap = parseNullBitmap(
       dataView.buffer,
@@ -370,7 +493,7 @@ export function parseData<T extends DataType>(
     });
   }
 
-  if (isLargeUtf8(dataType)) {
+  if (DataType.isLargeUtf8(dataType)) {
     const [validityPtr, offsetsPtr, dataPtr] = bufferPtrs;
     const nullBitmap = parseNullBitmap(
       dataView.buffer,
@@ -576,7 +699,63 @@ export function parseData<T extends DataType>(
     });
   }
 
-  // TODO: sparse union, dense union, dictionary
+  if (DataType.isDenseUnion(dataType)) {
+    const [typeIdsPtr, offsetsPtr] = bufferPtrs;
+
+    const valueOffsets = copy
+      ? new Int32Array(
+          copyBuffer(
+            dataView.buffer,
+            offsetsPtr,
+            (length + 1) * Int32Array.BYTES_PER_ELEMENT
+          )
+        )
+      : new Int32Array(dataView.buffer, offsetsPtr, length + 1);
+
+    const typeIds = copy
+      ? new Int8Array(
+          copyBuffer(
+            dataView.buffer,
+            typeIdsPtr,
+            (length + 1) * Int8Array.BYTES_PER_ELEMENT
+          )
+        )
+      : new Int8Array(dataView.buffer, typeIdsPtr, length + 1);
+
+    return arrow.makeData({
+      type: dataType,
+      offset,
+      length,
+      nullCount,
+      typeIds,
+      children,
+      valueOffsets,
+    });
+  }
+
+  if (DataType.isSparseUnion(dataType)) {
+    const [typeIdsPtr] = bufferPtrs;
+
+    const typeIds = copy
+      ? new Int8Array(
+          copyBuffer(
+            dataView.buffer,
+            typeIdsPtr,
+            (length + 1) * Int8Array.BYTES_PER_ELEMENT
+          )
+        )
+      : new Int8Array(dataView.buffer, typeIdsPtr, length + 1);
+
+    return arrow.makeData({
+      type: dataType,
+      offset,
+      length,
+      nullCount,
+      typeIds,
+      children,
+    });
+  }
+
   throw new Error(`Unsupported type ${dataType}`);
 }
 
@@ -590,7 +769,9 @@ function getDateByteWidth(type: arrow.Date_): number {
   assertUnreachable();
 }
 
-function getTimeByteWidth(type: arrow.Time | arrow.Timestamp): number {
+function getTimeByteWidth(
+  type: arrow.Time | arrow.Timestamp | arrow.Duration
+): number {
   switch (type.unit) {
     case arrow.TimeUnit.SECOND:
     case arrow.TimeUnit.MILLISECOND:
