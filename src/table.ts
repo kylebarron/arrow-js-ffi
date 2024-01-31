@@ -17,7 +17,7 @@ export function parseTable<T extends TypeMap>(
   buffer: ArrayBuffer,
   arrayPtrs: number[],
   schemaPtr: number,
-  copy: boolean = true
+  copy: boolean = true,
 ): arrow.Table<T> {
   const schema = parseSchema(buffer, schemaPtr);
 
@@ -27,7 +27,7 @@ export function parseTable<T extends TypeMap>(
       buffer,
       arrayPtrs[i],
       new arrow.Struct(schema.fields),
-      copy
+      copy,
     );
     const recordBatch = new arrow.RecordBatch(schema, structData);
     batches.push(recordBatch);

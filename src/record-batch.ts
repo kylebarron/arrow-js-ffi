@@ -32,14 +32,14 @@ export function parseRecordBatch(
   buffer: ArrayBuffer,
   arrayPtr: number,
   schemaPtr: number,
-  copy: boolean = true
+  copy: boolean = true,
 ): arrow.RecordBatch {
   const schema = parseSchema(buffer, schemaPtr);
   const data = parseData(
     buffer,
     arrayPtr,
     new arrow.Struct(schema.fields),
-    copy
+    copy,
   );
   return new arrow.RecordBatch(schema, data);
 }
