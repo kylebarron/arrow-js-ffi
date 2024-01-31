@@ -1,6 +1,12 @@
 # Changelog
 
+## [0.4.1] - 2024-01-31
+
+- Add clean and build to `prepublishOnly`. 0.4.0 had accidentally been published with stale code.
+
 ## [0.4.0] - 2024-01-31
+
+**Yanked**
 
 - Support for null bitmaps, union arrays, duration arrays, dictionary-encoded arrays, map arrays.
 - Set `copy` to `true` by default. To create zero-copy views, pass `copy=false`.
