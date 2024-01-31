@@ -122,6 +122,18 @@ const table = parseRecordBatch(
 );
 ```
 
+## Memory Management
+
+TL;dr: As of version 0.4, `arrow-js-ffi` **does not release any WebAssembly resources**. You must free Arrow resources when you're done with them to avoid memory leaks. This library does not currently provide helpers to deallocate that memory; instead look for `free` methods exposed by Emscripten or wasm-bindgen.
+
+Memory management between WebAssembly's own memory and JavaScript memory can be tricky. The Arrow C Data Interface includes [prescriptions for memory management](https://arrow.apache.org/docs/format/CDataInterface.html#memory-management) but those recommendations are designed for situations where two programs share the same memory space. Applying it to WebAssembly-JavaScript interop is imperfect because WebAssembly memory is sandboxed in a separate memory space.
+
+The C Data Interface [instructs consumers to call the release callback](https://arrow.apache.org/docs/format/CDataInterface.html#release-callback-semantics-for-consumers), which deallocates the referenced memory. However in our case, we can't call the release callback in all situations because the lifetime of views on the referenced Arrow data would outlive the lifetime of the data. Even when a user passes `copy=true`, where the data is copied into JS memory, it's still uncertain whether to release the underlying resources because the user might _want_ to still do something with their Wasm table data.
+
+A future release of `arrow-js-ffi` may include standalone functions to release Arrow data, which users can call manually once they know they're done with the data. But even in this case, freeing the _underlying array_ will not free any wrapper structs allocated by Emscripten or wasm-bindgen. If the free method on those structs is called later, it would lead to a double-free.
+
+If you have thoughts on memory management, open an issue!
+
 ## Type Support
 
 Most of the unsupported types should be pretty straightforward to implement; they just need some testing.
