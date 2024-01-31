@@ -114,7 +114,7 @@ This expects an array of [`ArrowArray`](https://arrow.apache.org/docs/format/CDa
 
 ```ts
 const WASM_MEMORY: WebAssembly.Memory = ...
-const table = parseRecordBatch(
+const table = parseTable(
     WASM_MEMORY.buffer,
     arrayPtrs,
     schemaPtr,
