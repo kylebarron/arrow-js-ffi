@@ -196,8 +196,7 @@ describe("binary", (t) => {
     );
 
     const originalField = TEST_TABLE.schema.fields[columnIndex];
-    // declare it's not null
-    const originalVector = TEST_TABLE.getChildAt(columnIndex) as arrow.Vector;
+    const originalVector = TEST_TABLE.getChildAt(columnIndex)!;
     const fieldPtr = FFI_TABLE.schemaAddr(columnIndex);
     const field = parseField(WASM_MEMORY.buffer, fieldPtr);
 
@@ -277,8 +276,7 @@ describe("string", (t) => {
     );
 
     const originalField = TEST_TABLE.schema.fields[columnIndex];
-    // declare it's not null
-    const originalVector = TEST_TABLE.getChildAt(columnIndex) as arrow.Vector;
+    const originalVector = TEST_TABLE.getChildAt(columnIndex)!;
     const fieldPtr = FFI_TABLE.schemaAddr(columnIndex);
     const field = parseField(WASM_MEMORY.buffer, fieldPtr);
 
@@ -346,8 +344,7 @@ describe("boolean", (t) => {
     );
 
     const originalField = TEST_TABLE.schema.fields[columnIndex];
-    // declare it's not null
-    const originalVector = TEST_TABLE.getChildAt(columnIndex) as arrow.Vector;
+    const originalVector = TEST_TABLE.getChildAt(columnIndex)!;
     const fieldPtr = FFI_TABLE.schemaAddr(columnIndex);
     const field = parseField(WASM_MEMORY.buffer, fieldPtr);
 
@@ -379,8 +376,7 @@ describe("null array", (t) => {
     );
 
     const originalField = TEST_TABLE.schema.fields[columnIndex];
-    // declare it's not null
-    const originalVector = TEST_TABLE.getChildAt(columnIndex) as arrow.Vector;
+    const originalVector = TEST_TABLE.getChildAt(columnIndex)!;
     const fieldPtr = FFI_TABLE.schemaAddr(columnIndex);
     const field = parseField(WASM_MEMORY.buffer, fieldPtr);
 
@@ -412,8 +408,7 @@ describe("list array", (t) => {
     );
 
     const originalField = TEST_TABLE.schema.fields[columnIndex];
-    // declare it's not null
-    const originalVector = TEST_TABLE.getChildAt(columnIndex) as arrow.Vector;
+    const originalVector = TEST_TABLE.getChildAt(columnIndex)!;
     const fieldPtr = FFI_TABLE.schemaAddr(columnIndex);
     const field = parseField(WASM_MEMORY.buffer, fieldPtr);
 
@@ -499,8 +494,7 @@ describe("extension array", (t) => {
     );
 
     const originalField = TEST_TABLE.schema.fields[columnIndex];
-    // declare it's not null
-    const originalVector = TEST_TABLE.getChildAt(columnIndex) as arrow.Vector;
+    const originalVector = TEST_TABLE.getChildAt(columnIndex)!;
     const fieldPtr = FFI_TABLE.schemaAddr(columnIndex);
     const field = parseField(WASM_MEMORY.buffer, fieldPtr);
 
@@ -544,8 +538,7 @@ describe("extension array", (t) => {
 //   );
 
 //   const originalField = TEST_TABLE.schema.fields[columnIndex];
-//   // declare it's not null
-//   const originalVector = TEST_TABLE.getChildAt(columnIndex) as arrow.Vector;
+//   const originalVector = TEST_TABLE.getChildAt(columnIndex)!;
 //   const fieldPtr = FFI_TABLE.schemaAddr(columnIndex);
 //   const field = parseField(WASM_MEMORY.buffer, fieldPtr);
 
@@ -572,8 +565,7 @@ describe("date32", (t) => {
     );
 
     const originalField = TEST_TABLE.schema.fields[columnIndex];
-    // declare it's not null
-    const originalVector = TEST_TABLE.getChildAt(columnIndex) as arrow.Vector;
+    const originalVector = TEST_TABLE.getChildAt(columnIndex)!;
     const fieldPtr = FFI_TABLE.schemaAddr(columnIndex);
     const field = parseField(WASM_MEMORY.buffer, fieldPtr);
 
@@ -606,8 +598,7 @@ describe("date32", (t) => {
 //   );
 
 //   const originalField = TEST_TABLE.schema.fields[columnIndex];
-//   // declare it's not null
-//   const originalVector = TEST_TABLE.getChildAt(columnIndex) as arrow.Vector;
+//   const originalVector = TEST_TABLE.getChildAt(columnIndex)!;
 //   const fieldPtr = FFI_TABLE.schemaAddr(columnIndex);
 //   const field = parseField(WASM_MEMORY.buffer, fieldPtr);
 
@@ -634,8 +625,7 @@ describe("duration", (t) => {
     );
 
     const originalField = TEST_TABLE.schema.fields[columnIndex];
-    // declare it's not null
-    const originalVector = TEST_TABLE.getChildAt(columnIndex) as arrow.Vector;
+    const originalVector = TEST_TABLE.getChildAt(columnIndex)!;
     const fieldPtr = FFI_TABLE.schemaAddr(columnIndex);
     const field = parseField(WASM_MEMORY.buffer, fieldPtr);
 
@@ -667,8 +657,7 @@ describe("nullable int", (t) => {
     );
 
     const originalField = TEST_TABLE.schema.fields[columnIndex];
-    // declare it's not null
-    const originalVector = TEST_TABLE.getChildAt(columnIndex) as arrow.Vector;
+    const originalVector = TEST_TABLE.getChildAt(columnIndex)!;
     const fieldPtr = FFI_TABLE.schemaAddr(columnIndex);
     const field = parseField(WASM_MEMORY.buffer, fieldPtr);
 
@@ -688,6 +677,70 @@ describe("nullable int", (t) => {
       validityEqual(originalVector, wasmVector),
       "validity should be equal"
     ).toBeTruthy();
+  }
+
+  it("copy=false", () => test(false));
+  it("copy=true", () => test(true));
+});
+
+describe("dictionary encoded string", (t) => {
+  function test(copy: boolean) {
+    let columnIndex = TEST_TABLE.schema.fields.findIndex(
+      (field) => field.name == "dictionary_encoded_string"
+    );
+
+    const originalField = TEST_TABLE.schema.fields[columnIndex];
+    const originalVector = TEST_TABLE.getChildAt(columnIndex)!;
+    const fieldPtr = FFI_TABLE.schemaAddr(columnIndex);
+    const field = parseField(WASM_MEMORY.buffer, fieldPtr);
+
+    expect(field.name).toStrictEqual(originalField.name);
+    expect(field.typeId).toStrictEqual(originalField.typeId);
+    expect(field.nullable).toStrictEqual(originalField.nullable);
+
+    const arrayPtr = FFI_TABLE.arrayAddr(0, columnIndex);
+    const wasmVector = parseVector(
+      WASM_MEMORY.buffer,
+      arrayPtr,
+      field.type,
+      copy
+    );
+
+    for (let i = 0; i < 3; i++) {
+      expect(originalVector.get(i)).toStrictEqual(wasmVector.get(i));
+    }
+  }
+
+  it("copy=false", () => test(false));
+  it("copy=true", () => test(true));
+});
+
+describe("dictionary encoded string (with nulls)", (t) => {
+  function test(copy: boolean) {
+    let columnIndex = TEST_TABLE.schema.fields.findIndex(
+      (field) => field.name == "dictionary_encoded_string_null"
+    );
+
+    const originalField = TEST_TABLE.schema.fields[columnIndex];
+    const originalVector = TEST_TABLE.getChildAt(columnIndex)!;
+    const fieldPtr = FFI_TABLE.schemaAddr(columnIndex);
+    const field = parseField(WASM_MEMORY.buffer, fieldPtr);
+
+    expect(field.name).toStrictEqual(originalField.name);
+    expect(field.typeId).toStrictEqual(originalField.typeId);
+    expect(field.nullable).toStrictEqual(originalField.nullable);
+
+    const arrayPtr = FFI_TABLE.arrayAddr(0, columnIndex);
+    const wasmVector = parseVector(
+      WASM_MEMORY.buffer,
+      arrayPtr,
+      field.type,
+      copy
+    );
+
+    for (let i = 0; i < 3; i++) {
+      expect(originalVector.get(i)).toStrictEqual(wasmVector.get(i));
+    }
   }
 
   it("copy=false", () => test(false));

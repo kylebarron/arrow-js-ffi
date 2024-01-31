@@ -73,11 +73,6 @@ export function parseField(buffer: ArrayBuffer, ptr: number): arrow.Field {
     );
   }
 
-  let dictionaryValuesField: arrow.Field | null = null;
-  if (dictionaryPtr !== 0) {
-    dictionaryValuesField = parseField(buffer, dictionaryPtr);
-  }
-
   const field = parseFieldContent({
     formatString,
     flags,
@@ -85,18 +80,20 @@ export function parseField(buffer: ArrayBuffer, ptr: number): arrow.Field {
     childrenFields,
     metadata,
   });
-  if (dictionaryValuesField !== null) {
+
+  if (dictionaryPtr !== 0) {
+    const dictionaryValuesField = parseField(buffer, dictionaryPtr);
     const dictionaryType = new arrow.Dictionary(
       dictionaryValuesField,
       field.type,
       null,
-      flags.dictionaryOrdered
+      flags.dictionaryOrdered,
     );
     return new arrow.Field(
       field.name,
       dictionaryType,
       flags.nullable,
-      metadata
+      metadata,
     );
   }
 
