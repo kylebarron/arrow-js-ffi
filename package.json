@@ -1,6 +1,6 @@
 {
   "name": "arrow-js-ffi",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Zero-copy reading of Arrow data from WebAssembly",
   "source": "src/index.ts",
   "umd:main": "dist/arrow-js-ffi.umd.js",
