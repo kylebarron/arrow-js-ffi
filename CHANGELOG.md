@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.4.0] - 2024-01-31
+
+- Support for null bitmaps, union arrays, duration arrays, dictionary-encoded arrays, map arrays.
+- Set `copy` to `true` by default. To create zero-copy views, pass `copy=false`.
+- Bump `apache-arrow` peer dependency to v15.
+- Add `parseSchema` by @kylebarron in https://github.com/kylebarron/arrow-js-ffi/pull/72
+- Fix passing down `copy` when parsing children by @kylebarron in https://github.com/kylebarron/arrow-js-ffi/pull/44
+- Automated publishing via CI by @kylebarron in https://github.com/kylebarron/arrow-js-ffi/pull/92
+- memory management doc by @kylebarron in https://github.com/kylebarron/arrow-js-ffi/pull/98
+
+**Full Changelog**: https://github.com/kylebarron/arrow-js-ffi/compare/v0.3.0...v0.4.0
+
 ## [0.3.0] - 2023-08-15
 
 - Add tests copying data across boundary by @kylebarron in https://github.com/kylebarron/arrow-js-ffi/pull/32
