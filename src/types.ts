@@ -20,11 +20,12 @@ export enum Type {
   FixedSizeBinary = 15 /** Fixed-size binary. Each value occupies the same number of bytes */,
   FixedSizeList = 16 /** Fixed-size list. Each value occupies the same number of bytes */,
   Map = 17 /** Map of named logical types */,
+  Duration = 18 /** Measure of elapsed time in either seconds, milliseconds, microseconds or nanoseconds. */,
+  LargeBinary = 19 /** Large variable-length bytes (no guarantee of UTF8-ness) */,
+  LargeUtf8 = 20 /** Large variable-length string as List<Char> */,
 
-  // These 3 are not included in the upstream enum
+  // Not yet included in the upstream enum
   LargeList = 30,
-  LargeBinary = 31,
-  LargeUtf8 = 32,
 
   Dictionary = -1 /** Dictionary aka Category type */,
   Int8 = -2,
@@ -60,13 +61,10 @@ export class LargeList<T extends DataType = any> extends DataType<
   { [0]: T }
 > {
   constructor(child: Field<T>) {
-    super();
+    super(Type.LargeList);
     this.children = [child];
   }
   public declare readonly children: Field<T>[];
-  public get typeId() {
-    return Type.LargeList as Type.LargeList; // Type.List as Type.List;
-  }
   public toString() {
     return `LargeList<${this.valueType}>`;
   }
@@ -85,48 +83,6 @@ export class LargeList<T extends DataType = any> extends DataType<
   })(LargeList.prototype);
 }
 
-// @ts-expect-error Type 'Type.LargeBinary' does not satisfy the constraint 'Type'
-export class LargeBinary extends DataType<Type.LargeBinary> {
-  constructor() {
-    super();
-  }
-  public get typeId() {
-    return Type.LargeBinary as Type.LargeBinary;
-  }
-  public toString() {
-    return `Binary`;
-  }
-  protected static [Symbol.toStringTag] = ((proto: LargeBinary) => {
-    (<any>proto).ArrayType = Uint8Array;
-    return (proto[Symbol.toStringTag] = "LargeBinary");
-  })(LargeBinary.prototype);
-}
-
-// @ts-expect-error Type 'Type.LargeUtf8' does not satisfy the constraint 'Type'
-export class LargeUtf8 extends DataType<Type.LargeUtf8> {
-  constructor() {
-    super();
-  }
-  public get typeId() {
-    return Type.LargeUtf8 as Type.LargeUtf8;
-  }
-  public toString() {
-    return `LargeUtf8`;
-  }
-  protected static [Symbol.toStringTag] = ((proto: LargeUtf8) => {
-    (<any>proto).ArrayType = Uint8Array;
-    return (proto[Symbol.toStringTag] = "LargeUtf8");
-  })(LargeUtf8.prototype);
-}
-
 export function isLargeList(x: any): x is LargeList {
   return x?.typeId === Type.LargeList;
-}
-
-export function isLargeBinary(x: any): x is LargeBinary {
-  return x?.typeId === Type.LargeBinary;
-}
-
-export function isLargeUtf8(x: any): x is LargeUtf8 {
-  return x?.typeId === Type.LargeUtf8;
 }

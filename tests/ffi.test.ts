@@ -13,8 +13,7 @@ import { Type } from "../src/types";
 
 wasm.setPanicHook();
 
-// @ts-expect-error
-const WASM_MEMORY: WebAssembly.Memory = wasm.__wasm.memory;
+const WASM_MEMORY = wasm.wasmMemory();
 
 const TEST_TABLE = loadIPCTableFromDisk("tests/table.arrow");
 const FFI_TABLE = arrowTableToFFI(TEST_TABLE);
@@ -95,7 +94,7 @@ describe("primitive types non-null", (t) => {
 
     expect(field.name, "col1");
     expect(field.typeId).toStrictEqual(fixture.dataType.typeId);
-    expect(field.nullable).toBeFalsy();
+    expect(field.nullable).toBeTruthy();
 
     const arrayPtr = ffiTable.arrayAddr(0, 0);
     const wasmVector = parseVector(
@@ -627,6 +626,39 @@ describe("date32", (t) => {
 //     expect(originalVector.get(i), wasmVector.get(i));
 //   }
 // });
+
+describe("duration", (t) => {
+  function test(copy: boolean) {
+    let columnIndex = TEST_TABLE.schema.fields.findIndex(
+      (field) => field.name == "duration"
+    );
+
+    const originalField = TEST_TABLE.schema.fields[columnIndex];
+    // declare it's not null
+    const originalVector = TEST_TABLE.getChildAt(columnIndex) as arrow.Vector;
+    const fieldPtr = FFI_TABLE.schemaAddr(columnIndex);
+    const field = parseField(WASM_MEMORY.buffer, fieldPtr);
+
+    expect(field.name).toStrictEqual(originalField.name);
+    expect(field.typeId).toStrictEqual(originalField.typeId);
+    expect(field.nullable).toStrictEqual(originalField.nullable);
+
+    const arrayPtr = FFI_TABLE.arrayAddr(0, columnIndex);
+    const wasmVector = parseVector(
+      WASM_MEMORY.buffer,
+      arrayPtr,
+      field.type,
+      copy
+    );
+
+    for (let i = 0; i < 3; i++) {
+      expect(originalVector.get(i), wasmVector.get(i));
+    }
+  }
+
+  it("copy=false", () => test(false));
+  it("copy=true", () => test(true));
+});
 
 describe("nullable int", (t) => {
   function test(copy: boolean) {

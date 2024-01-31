@@ -2,7 +2,7 @@
 
 import * as arrow from "apache-arrow";
 import { assert } from "./vector";
-import { LargeBinary, LargeList, LargeUtf8 } from "./types";
+import { LargeList } from "./types";
 
 interface Flags {
   nullable: boolean;
@@ -27,9 +27,9 @@ const formatMapping: Record<string, arrow.DataType | undefined> = {
   f: new arrow.Float32(),
   g: new arrow.Float64(),
   z: new arrow.Binary(),
-  Z: new LargeBinary(),
+  Z: new arrow.LargeBinary(),
   u: new arrow.Utf8(),
-  U: new LargeUtf8(),
+  U: new arrow.LargeUtf8(),
   tdD: new arrow.DateDay(),
   tdm: new arrow.DateMillisecond(),
   tts: new arrow.TimeSecond(),
@@ -69,7 +69,7 @@ export function parseField(buffer: ArrayBuffer, ptr: number): arrow.Field {
   for (let i = 0; i < nChildren; i++) {
     childrenFields[i] = parseField(
       buffer,
-      dataView.getUint32(ptrToChildrenPtrs + i * 4, true)
+      dataView.getUint32(ptrToChildrenPtrs + i * 4, true),
     );
   }
 
@@ -163,6 +163,31 @@ function parseFieldContent({
     return new arrow.Field(name, type, flags.nullable, metadata);
   }
 
+  // duration
+  if (formatString.slice(0, 2) === "tD") {
+    let timeUnit: arrow.TimeUnit | null = null;
+    switch (formatString[2]) {
+      case "s":
+        timeUnit = arrow.TimeUnit.SECOND;
+        break;
+      case "m":
+        timeUnit = arrow.TimeUnit.MILLISECOND;
+        break;
+      case "u":
+        timeUnit = arrow.TimeUnit.MICROSECOND;
+        break;
+      case "n":
+        timeUnit = arrow.TimeUnit.NANOSECOND;
+        break;
+
+      default:
+        throw new Error(`invalid timestamp ${formatString}`);
+    }
+
+    const type = new arrow.Duration(timeUnit);
+    return new arrow.Field(name, type, flags.nullable, metadata);
+  }
+
   // struct
   if (formatString === "+s") {
     const type = new arrow.Struct(childrenFields);
@@ -200,6 +225,20 @@ function parseFieldContent({
     return new arrow.Field(name, type, flags.nullable, metadata);
   }
 
+  // Dense union
+  if (formatString.slice(0, 4) === "+ud:") {
+    const typeIds = formatString.slice(4).split(",").map(Number);
+    const type = new arrow.DenseUnion(typeIds, childrenFields);
+    return new arrow.Field(name, type, flags.nullable, metadata);
+  }
+
+  // Sparse union
+  if (formatString.slice(0, 4) === "+us:") {
+    const typeIds = formatString.slice(4).split(",").map(Number);
+    const type = new arrow.SparseUnion(typeIds, childrenFields);
+    return new arrow.Field(name, type, flags.nullable, metadata);
+  }
+
   throw new Error(`Unsupported format: ${formatString}`);
 }
 
@@ -225,7 +264,7 @@ function parseFlags(flag: bigint): Flags {
 function parseNullTerminatedString(
   dataView: DataView,
   ptr: number,
-  maxBytesToRead: number = Infinity
+  maxBytesToRead: number = Infinity,
 ): string {
   const maxPtr = Math.min(ptr + maxBytesToRead, dataView.byteLength);
   let end = ptr;
@@ -244,7 +283,7 @@ function parseNullTerminatedString(
  */
 function parseMetadata(
   dataView: DataView,
-  ptr: number
+  ptr: number,
 ): Map<string, string> | null {
   const numEntries = dataView.getInt32(ptr, true);
   if (numEntries === 0) {
@@ -258,14 +297,14 @@ function parseMetadata(
     const keyByteLength = dataView.getInt32(ptr, true);
     ptr += 4;
     const key = UTF8_DECODER.decode(
-      new Uint8Array(dataView.buffer, ptr, keyByteLength)
+      new Uint8Array(dataView.buffer, ptr, keyByteLength),
     );
     ptr += keyByteLength;
 
     const valueByteLength = dataView.getInt32(ptr, true);
     ptr += 4;
     const value = UTF8_DECODER.decode(
-      new Uint8Array(dataView.buffer, ptr, valueByteLength)
+      new Uint8Array(dataView.buffer, ptr, valueByteLength),
     );
     ptr += valueByteLength;
 

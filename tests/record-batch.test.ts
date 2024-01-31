@@ -10,8 +10,7 @@ import { readFileSync } from "fs";
 
 wasm.setPanicHook();
 
-// @ts-expect-error
-const WASM_MEMORY: WebAssembly.Memory = wasm.__wasm.memory;
+const WASM_MEMORY = wasm.wasmMemory()
 
 const TEST_TABLE = loadIPCTableFromDisk("tests/table.arrow");
 const FFI_RECORD_BATCH = arrowTableToFFIRecordBatch(TEST_TABLE);
