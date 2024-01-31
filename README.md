@@ -145,9 +145,9 @@ Most of the unsupported types should be pretty straightforward to implement; the
 ### Binary & String
 
 - [x] Binary
-- [x] Large Binary (Not implemented by Arrow JS but supported by downcasting to `Binary`.)
+- [x] Large Binary (Supported natively by Arrow JS as of v15)
 - [x] String
-- [x] Large String (Not implemented by Arrow JS but supported by downcasting to `String`.)
+- [x] Large String (Supported natively by Arrow JS as of v15)
 - [x] Fixed-width Binary
 
 ### Decimal
