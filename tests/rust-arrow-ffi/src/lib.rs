@@ -57,3 +57,16 @@ pub fn set_panic_hook() {
     // https://github.com/rustwasm/console_error_panic_hook#readme
     console_error_panic_hook::set_once();
 }
+
+/// Returns a handle to this wasm instance's `WebAssembly.Memory`
+#[wasm_bindgen(js_name = wasmMemory)]
+pub fn memory() -> JsValue {
+    wasm_bindgen::memory()
+}
+
+/// Returns a handle to this wasm instance's `WebAssembly.Table` which is the indirect function
+/// table used by Rust
+#[wasm_bindgen(js_name = _functionTable)]
+pub fn function_table() -> JsValue {
+    wasm_bindgen::function_table()
+}
