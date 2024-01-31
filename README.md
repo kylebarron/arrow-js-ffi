@@ -152,8 +152,10 @@ Most of the unsupported types should be pretty straightforward to implement; the
 
 ### Decimal
 
-- [ ] Decimal128 (failing a test)
-- [ ] Decimal256 (failing a test)
+- [ ] Decimal128 (failing a test, this may be [#37920])
+- [ ] Decimal256 (failing a test, this may be [#37920])
+
+[#37920]: https://github.com/apache/arrow/issues/37920
 
 ### Temporal Types
 
