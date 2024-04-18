@@ -3,6 +3,7 @@
 ## [0.4.2] - 2024-04-18
 
 - Allow `Uint32Array` type in `parseTable`.
+- Ensure `apache-arrow` is marked as an external library in Rollup
 
 ## [0.4.1] - 2024-01-31
 
