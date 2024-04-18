@@ -15,7 +15,7 @@ This expects an array of [`ArrowArray`](https://arrow.apache.org/docs/format/CDa
  */
 export function parseTable<T extends TypeMap>(
   buffer: ArrayBuffer,
-  arrayPtrs: number[],
+  arrayPtrs: number[] | Uint32Array,
   schemaPtr: number,
   copy: boolean = true,
 ): arrow.Table<T> {
