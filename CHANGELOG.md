@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.4.2] - 2024-04-18
+
+- Allow `Uint32Array` type in `parseTable`.
+
 ## [0.4.1] - 2024-01-31
 
 - Add clean and build to `prepublishOnly`. 0.4.0 had accidentally been published with stale code.
