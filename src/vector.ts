@@ -770,7 +770,7 @@ function getDateByteWidth(type: arrow.Date_): number {
 }
 
 function parseNullBitmap(
-  buffer: ArrayBuffer,
+  buffer: ArrayBufferLike,
   validityPtr: number,
   length: number,
   copy: boolean,
@@ -791,7 +791,7 @@ function parseNullBitmap(
 
 /** Copy existing buffer into new buffer */
 function copyBuffer(
-  buffer: ArrayBuffer,
+  buffer: ArrayBufferLike,
   ptr: number,
   byteLength: number,
 ): ArrayBuffer {
