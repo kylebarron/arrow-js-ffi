@@ -64,7 +64,7 @@ export class LargeList<T extends DataType = any> extends DataType<
     super(Type.LargeList);
     this.children = [child];
   }
-  public declare readonly children: Field<T>[];
+  declare public readonly children: Field<T>[];
   public toString() {
     return `LargeList<${this.valueType}>`;
   }
