@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.4.3] - 2025-08-28
+
+- Fix reading 64-bit Timestamp and Duration types https://github.com/kylebarron/arrow-js-ffi/pull/130
+
 ## [0.4.2] - 2024-04-18
 
 - Allow `Uint32Array` type in `parseTable`.
