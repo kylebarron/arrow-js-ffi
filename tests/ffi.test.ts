@@ -592,31 +592,31 @@ describe("date32", (t) => {
 });
 
 // // This also looks to be failing; probably an issue with the byte width?
-// test.skip("timestamp", (t) => {
-//   let columnIndex = TEST_TABLE.schema.fields.findIndex(
-//     (field) => field.name == "timestamp"
-//   );
+it("timestamp", (t) => {
+  let columnIndex = TEST_TABLE.schema.fields.findIndex(
+    (field) => field.name == "timestamp"
+  );
 
-//   const originalField = TEST_TABLE.schema.fields[columnIndex];
-//   const originalVector = TEST_TABLE.getChildAt(columnIndex)!;
-//   const fieldPtr = FFI_TABLE.schemaAddr(columnIndex);
-//   const field = parseField(WASM_MEMORY.buffer, fieldPtr);
+  const originalField = TEST_TABLE.schema.fields[columnIndex];
+  const originalVector = TEST_TABLE.getChildAt(columnIndex)!;
+  const fieldPtr = FFI_TABLE.schemaAddr(columnIndex);
+  const field = parseField(WASM_MEMORY.buffer, fieldPtr);
 
-//   expect(field.name).toStrictEqual(originalField.name);
-//   expect(field.typeId).toStrictEqual(originalField.typeId);
-//   expect(field.nullable).toStrictEqual(originalField.nullable);
+  expect(field.name).toStrictEqual(originalField.name);
+  expect(field.typeId).toStrictEqual(originalField.typeId);
+  expect(field.nullable).toStrictEqual(originalField.nullable);
 
-//   const arrayPtr = FFI_TABLE.arrayAddr(0, columnIndex);
-//   const wasmVector = parseVector(WASM_MEMORY.buffer, arrayPtr, field.type);
+  const arrayPtr = FFI_TABLE.arrayAddr(0, columnIndex);
+  const wasmVector = parseVector(WASM_MEMORY.buffer, arrayPtr, field.type);
 
-//   console.log(wasmVector.toJSON());
+  // console.log(wasmVector.toJSON());
 
-//   for (let i = 0; i < 3; i++) {
-//     console.log(originalVector.get(i));
-//     console.log(wasmVector.get(i));
-//     expect(originalVector.get(i), wasmVector.get(i));
-//   }
-// });
+  for (let i = 0; i < 3; i++) {
+    // console.log(originalVector.get(i));
+    // console.log(wasmVector.get(i));
+    expect(originalVector.get(i), wasmVector.get(i));
+  }
+});
 
 describe("duration", (t) => {
   function test(copy: boolean) {

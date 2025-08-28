@@ -1,5 +1,8 @@
 {
   "scripts": {
     "build": "wasm-pack build --dev --target nodejs"
+  },
+  "devDependencies": {
+    "wasm-pack": "^0.13.1"
   }
 }

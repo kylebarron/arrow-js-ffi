@@ -309,7 +309,7 @@ function parseDataContent<T extends DataType>({
       copy,
     );
 
-    let byteWidth = getTimeByteWidth(dataType);
+    const byteWidth = 8;
     const data = copy
       ? new dataType.ArrayType(
           copyBuffer(dataView.buffer, dataPtr, length * byteWidth),
@@ -334,7 +334,7 @@ function parseDataContent<T extends DataType>({
       copy,
     );
 
-    let byteWidth = getTimeByteWidth(dataType);
+    const byteWidth = 8;
     const data = copy
       ? new dataType.ArrayType(
           copyBuffer(dataView.buffer, dataPtr, length * byteWidth),
@@ -769,22 +769,8 @@ function getDateByteWidth(type: arrow.Date_): number {
   assertUnreachable();
 }
 
-function getTimeByteWidth(
-  type: arrow.Time | arrow.Timestamp | arrow.Duration,
-): number {
-  switch (type.unit) {
-    case arrow.TimeUnit.SECOND:
-    case arrow.TimeUnit.MILLISECOND:
-      return 4;
-    case arrow.TimeUnit.MICROSECOND:
-    case arrow.TimeUnit.NANOSECOND:
-      return 8;
-  }
-  assertUnreachable();
-}
-
 function parseNullBitmap(
-  buffer: ArrayBuffer,
+  buffer: ArrayBufferLike,
   validityPtr: number,
   length: number,
   copy: boolean,
@@ -805,7 +791,7 @@ function parseNullBitmap(
 
 /** Copy existing buffer into new buffer */
 function copyBuffer(
-  buffer: ArrayBuffer,
+  buffer: ArrayBufferLike,
   ptr: number,
   byteLength: number,
 ): ArrayBuffer {
